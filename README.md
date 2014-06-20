@@ -120,11 +120,6 @@ tested on the x86 platform under Windows and Linux.
 The decompression functions should be endian-neutral, and also reentrant
 and thread-safe (not tested).
 
-In src/nasm there are 32-bit x86 assembler (386+) versions of some of the
-files.
-
-Makefiles (GNU Make style) for a number of compilers are included.
-
 
 Frequently Asked Questions
 --------------------------
@@ -154,11 +149,6 @@ A: Sure, the object files produced by both Borland C and Watcom C should
 Q: Will tinf work on UltraSTRANGE machines running WhackOS?
 
 A: I have no idea .. please try it out and let me know!
-
-Q: Why are all the makefiles in GNU Make style?
-
-A: I'm used to GNU Make, and it has a number of features that are missing
-   in some of the other Make utilities.
 
 Q: This is the first release, how can there be frequently asked questions?
 
