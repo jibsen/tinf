@@ -1,5 +1,5 @@
 /*
- * tgunzip  -  gzip decompressor example
+ * tgunzip - gzip decompressor example
  *
  * Copyright (c) 2003-2014 Joergen Ibsen
  *
@@ -35,78 +35,87 @@
 
 void exit_error(const char *what)
 {
-   printf("ERROR: %s\n", what);
-   exit(1);
+	printf("ERROR: %s\n", what);
+	exit(1);
 }
 
 int main(int argc, char *argv[])
 {
-    FILE *fin, *fout;
-    unsigned int len, dlen, outlen;
-    unsigned char *source, *dest;
-    int res;
+	FILE *fin, *fout;
+	unsigned int len, dlen, outlen;
+	unsigned char *source, *dest;
+	int res;
 
-    printf("tgunzip - example from the tiny inflate library (www.ibsensoftware.com)\n\n");
+	printf("tgunzip - example from the tiny inflate library (www.ibsensoftware.com)\n\n");
 
-    if (argc < 3)
-    {
-       printf(
-          "Syntax: tgunzip <source> <destination>\n\n"
-          "Both input and output are kept in memory, so do not use this on huge files.\n");
+	if (argc < 3) {
+		printf("Syntax: tgunzip <source> <destination>\n\n"
+		       "Both input and output are kept in memory, so do not use this on huge files.\n");
+		return 1;
+	}
 
-       return 1;
-    }
+	tinf_init();
 
-    tinf_init();
+	/* -- open files -- */
 
-    /* -- open files -- */
+	if ((fin = fopen(argv[1], "rb")) == NULL) {
+		exit_error("source file");
+	}
 
-    if ((fin = fopen(argv[1], "rb")) == NULL) exit_error("source file");
+	if ((fout = fopen(argv[2], "wb")) == NULL) {
+		exit_error("destination file");
+	}
 
-    if ((fout = fopen(argv[2], "wb")) == NULL) exit_error("destination file");
+	/* -- read source -- */
 
-    /* -- read source -- */
+	fseek(fin, 0, SEEK_END);
 
-    fseek(fin, 0, SEEK_END);
+	len = ftell(fin);
 
-    len = ftell(fin);
+	fseek(fin, 0, SEEK_SET);
 
-    fseek(fin, 0, SEEK_SET);
+	source = (unsigned char *) malloc(len);
 
-    source = (unsigned char *)malloc(len);
+	if (source == NULL) {
+		exit_error("memory");
+	}
 
-    if (source == NULL) exit_error("memory");
+	if (fread(source, 1, len, fin) != len) {
+		exit_error("read");
+	}
 
-    if (fread(source, 1, len, fin) != len) exit_error("read");
+	fclose(fin);
 
-    fclose(fin);
+	/* -- get decompressed length -- */
 
-    /* -- get decompressed length -- */
+	dlen = source[len - 1];
+	dlen = 256 * dlen + source[len - 2];
+	dlen = 256 * dlen + source[len - 3];
+	dlen = 256 * dlen + source[len - 4];
 
-    dlen =            source[len - 1];
-    dlen = 256*dlen + source[len - 2];
-    dlen = 256*dlen + source[len - 3];
-    dlen = 256*dlen + source[len - 4];
+	dest = (unsigned char *) malloc(dlen);
 
-    dest = (unsigned char *)malloc(dlen);
+	if (dest == NULL) {
+		exit_error("memory");
+	}
 
-    if (dest == NULL) exit_error("memory");
+	/* -- decompress data -- */
 
-    /* -- decompress data -- */
+	outlen = dlen;
 
-    outlen = dlen;
+	res = tinf_gzip_uncompress(dest, &outlen, source, len);
 
-    res = tinf_gzip_uncompress(dest, &outlen, source, len);
+	if ((res != TINF_OK) || (outlen != dlen)) {
+		exit_error("inflate");
+	}
 
-    if ((res != TINF_OK) || (outlen != dlen)) exit_error("inflate");
+	printf("decompressed %u bytes\n", outlen);
 
-    printf("decompressed %u bytes\n", outlen);
+	/* -- write output -- */
 
-    /* -- write output -- */
+	fwrite(dest, 1, outlen, fout);
 
-    fwrite(dest, 1, outlen, fout);
+	fclose(fout);
 
-    fclose(fout);
-
-    return 0;
+	return 0;
 }

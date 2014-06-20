@@ -1,5 +1,5 @@
 /*
- * tinfzlib  -  tiny zlib decompressor
+ * tinfzlib - tiny zlib decompressor
  *
  * Copyright (c) 2003-2014 Joergen Ibsen
  *
@@ -33,47 +33,59 @@
 int tinf_zlib_uncompress(void *dest, unsigned int *destLen,
                          const void *source, unsigned int sourceLen)
 {
-   unsigned char *src = (unsigned char *)source;
-   unsigned char *dst = (unsigned char *)dest;
-   unsigned int a32;
-   int res;
-   unsigned char cmf, flg;
+	unsigned char *src = (unsigned char *) source;
+	unsigned char *dst = (unsigned char *) dest;
+	unsigned int a32;
+	int res;
+	unsigned char cmf, flg;
 
-   /* -- get header bytes -- */
+	/* -- get header bytes -- */
 
-   cmf = src[0];
-   flg = src[1];
+	cmf = src[0];
+	flg = src[1];
 
-   /* -- check format -- */
+	/* -- check format -- */
 
-   /* check checksum */
-   if ((256*cmf + flg) % 31) return TINF_DATA_ERROR;
+	/* check checksum */
+	if ((256 * cmf + flg) % 31) {
+		return TINF_DATA_ERROR;
+	}
 
-   /* check method is deflate */
-   if ((cmf & 0x0f) != 8) return TINF_DATA_ERROR;
+	/* check method is deflate */
+	if ((cmf & 0x0f) != 8) {
+		return TINF_DATA_ERROR;
+	}
 
-   /* check window size is valid */
-   if ((cmf >> 4) > 7) return TINF_DATA_ERROR;
+	/* check window size is valid */
+	if ((cmf >> 4) > 7) {
+		return TINF_DATA_ERROR;
+	}
 
-   /* check there is no preset dictionary */
-   if (flg & 0x20) return TINF_DATA_ERROR;
+	/* check there is no preset dictionary */
+	if (flg & 0x20) {
+		return TINF_DATA_ERROR;
+	}
 
-   /* -- get adler32 checksum -- */
+	/* -- get adler32 checksum -- */
 
-   a32 =           src[sourceLen - 4];
-   a32 = 256*a32 + src[sourceLen - 3];
-   a32 = 256*a32 + src[sourceLen - 2];
-   a32 = 256*a32 + src[sourceLen - 1];
+	a32 = src[sourceLen - 4];
+	a32 = 256 * a32 + src[sourceLen - 3];
+	a32 = 256 * a32 + src[sourceLen - 2];
+	a32 = 256 * a32 + src[sourceLen - 1];
 
-   /* -- inflate -- */
+	/* -- inflate -- */
 
-   res = tinf_uncompress(dst, destLen, src + 2, sourceLen - 6);
+	res = tinf_uncompress(dst, destLen, src + 2, sourceLen - 6);
 
-   if (res != TINF_OK) return TINF_DATA_ERROR;
+	if (res != TINF_OK) {
+		return TINF_DATA_ERROR;
+	}
 
-   /* -- check adler32 checksum -- */
+	/* -- check adler32 checksum -- */
 
-   if (a32 != tinf_adler32(dst, *destLen)) return TINF_DATA_ERROR;
+	if (a32 != tinf_adler32(dst, *destLen)) {
+		return TINF_DATA_ERROR;
+	}
 
-   return TINF_OK;
+	return TINF_OK;
 }

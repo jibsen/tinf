@@ -1,5 +1,5 @@
 /*
- * tinfgzip  -  tiny gzip decompressor
+ * tinfgzip - tiny gzip decompressor
  *
  * Copyright (c) 2003-2014 Joergen Ibsen
  *
@@ -39,83 +39,105 @@
 int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
                          const void *source, unsigned int sourceLen)
 {
-    unsigned char *src = (unsigned char *)source;
-    unsigned char *dst = (unsigned char *)dest;
-    unsigned char *start;
-    unsigned int dlen, crc32;
-    int res;
-    unsigned char flg;
+	unsigned char *src = (unsigned char *) source;
+	unsigned char *dst = (unsigned char *) dest;
+	unsigned char *start;
+	unsigned int dlen, crc32;
+	int res;
+	unsigned char flg;
 
-    /* -- check format -- */
+	/* -- check format -- */
 
-    /* check id bytes */
-    if (src[0] != 0x1f || src[1] != 0x8b) return TINF_DATA_ERROR;
+	/* check id bytes */
+	if (src[0] != 0x1f || src[1] != 0x8b) {
+		return TINF_DATA_ERROR;
+	}
 
-    /* check method is deflate */
-    if (src[2] != 8) return TINF_DATA_ERROR;
+	/* check method is deflate */
+	if (src[2] != 8) {
+		return TINF_DATA_ERROR;
+	}
 
-    /* get flag byte */
-    flg = src[3];
+	/* get flag byte */
+	flg = src[3];
 
-    /* check that reserved bits are zero */
-    if (flg & 0xe0) return TINF_DATA_ERROR;
+	/* check that reserved bits are zero */
+	if (flg & 0xe0) {
+		return TINF_DATA_ERROR;
+	}
 
-    /* -- find start of compressed data -- */
+	/* -- find start of compressed data -- */
 
-    /* skip base header of 10 bytes */
-    start = src + 10;
+	/* skip base header of 10 bytes */
+	start = src + 10;
 
-    /* skip extra data if present */
-    if (flg & FEXTRA)
-    {
-       unsigned int xlen = start[1];
-       xlen = 256*xlen + start[0];
-       start += xlen + 2;
-    }
+	/* skip extra data if present */
+	if (flg & FEXTRA) {
+		unsigned int xlen = start[1];
+		xlen = 256 * xlen + start[0];
+		start += xlen + 2;
+	}
 
-    /* skip file name if present */
-    if (flg & FNAME) { while (*start) ++start; ++start; }
+	/* skip file name if present */
+	if (flg & FNAME) {
+		while (*start) {
+			++start;
+		}
+		++start;
+	}
 
-    /* skip file comment if present */
-    if (flg & FCOMMENT) { while (*start) ++start; ++start; }
+	/* skip file comment if present */
+	if (flg & FCOMMENT) {
+		while (*start) {
+			++start;
+		}
+		++start;
+	}
 
-    /* check header crc if present */
-    if (flg & FHCRC)
-    {
-       unsigned int hcrc = start[1];
-       hcrc = 256*hcrc + start[0];
+	/* check header crc if present */
+	if (flg & FHCRC) {
+		unsigned int hcrc = start[1];
+		hcrc = 256 * hcrc + start[0];
 
-       if (hcrc != (tinf_crc32(src, start - src) & 0x0000ffff))
-          return TINF_DATA_ERROR;
+		if (hcrc != (tinf_crc32(src, start - src) & 0x0000ffff)) {
+			return TINF_DATA_ERROR;
+		}
 
-       start += 2;
-    }
+		start += 2;
+	}
 
-    /* -- get decompressed length -- */
+	/* -- get decompressed length -- */
 
-    dlen =            src[sourceLen - 1];
-    dlen = 256*dlen + src[sourceLen - 2];
-    dlen = 256*dlen + src[sourceLen - 3];
-    dlen = 256*dlen + src[sourceLen - 4];
+	dlen = src[sourceLen - 1];
+	dlen = 256 * dlen + src[sourceLen - 2];
+	dlen = 256 * dlen + src[sourceLen - 3];
+	dlen = 256 * dlen + src[sourceLen - 4];
 
-    /* -- get crc32 of decompressed data -- */
+	/* -- get crc32 of decompressed data -- */
 
-    crc32 =             src[sourceLen - 5];
-    crc32 = 256*crc32 + src[sourceLen - 6];
-    crc32 = 256*crc32 + src[sourceLen - 7];
-    crc32 = 256*crc32 + src[sourceLen - 8];
+	crc32 = src[sourceLen - 5];
+	crc32 = 256 * crc32 + src[sourceLen - 6];
+	crc32 = 256 * crc32 + src[sourceLen - 7];
+	crc32 = 256 * crc32 + src[sourceLen - 8];
 
-    /* -- decompress data -- */
+	/* -- decompress data -- */
 
-    res = tinf_uncompress(dst, destLen, start, src + sourceLen - start - 8);
+	res = tinf_uncompress(dst, destLen, start,
+	                      src + sourceLen - start - 8);
 
-    if (res != TINF_OK) return TINF_DATA_ERROR;
+	if (res != TINF_OK) {
+		return TINF_DATA_ERROR;
+	}
 
-    if (*destLen != dlen) return TINF_DATA_ERROR;
+	if (*destLen != dlen) {
+		return TINF_DATA_ERROR;
+	}
 
-    /* -- check CRC32 checksum -- */
+	/* -- check CRC32 checksum -- */
 
-    if (crc32 != tinf_crc32(dst, dlen)) return TINF_DATA_ERROR;
+	if (crc32 != tinf_crc32(dst, dlen)) {
+		return TINF_DATA_ERROR;
+	}
 
-    return TINF_OK;
+	return TINF_OK;
 }

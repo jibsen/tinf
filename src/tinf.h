@@ -1,5 +1,5 @@
 /*
- * tinf  -  tiny inflate library (inflate, gzip, zlib)
+ * tinf - tiny inflate library (inflate, gzip, zlib)
  *
  * version 1.00
  *
