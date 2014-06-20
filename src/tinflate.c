@@ -1,10 +1,7 @@
 /*
  * tinflate  -  tiny inflate
  *
- * Copyright (c) 2003 by Joergen Ibsen / Jibz
- * All Rights Reserved
- *
- * http://www.ibsensoftware.com/
+ * Copyright (c) 2003-2014 Joergen Ibsen
  *
  * This software is provided 'as-is', without any express
  * or implied warranty.  In no event will the authors be

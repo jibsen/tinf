@@ -4,7 +4,7 @@ tinf - tiny inflate library
 
 Version 1.00
 
-Copyright (c) 2003 Joergen Ibsen
+Copyright (c) 2003-2014 Joergen Ibsen
 
 <http://www.ibsensoftware.com/>
 
@@ -170,7 +170,7 @@ License
 
 tinf - tiny inflate library
 
-Copyright (c) 2003 Joergen Ibsen
+Copyright (c) 2003-2014 Joergen Ibsen
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
