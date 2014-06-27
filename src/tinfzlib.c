@@ -33,7 +33,7 @@
 int tinf_zlib_uncompress(void *dest, unsigned int *destLen,
                          const void *source, unsigned int sourceLen)
 {
-	unsigned char *src = (unsigned char *) source;
+	const unsigned char *src = (const unsigned char *) source;
 	unsigned char *dst = (unsigned char *) dest;
 	unsigned int a32;
 	int res;
