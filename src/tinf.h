@@ -1,7 +1,7 @@
 /*
  * tinf - tiny inflate library (inflate, gzip, zlib)
  *
- * version 1.00
+ * version 1.0.0
  *
  * Copyright (c) 2003-2014 Joergen Ibsen
  *
