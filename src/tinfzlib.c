@@ -39,6 +39,11 @@ int tinf_zlib_uncompress(void *dest, unsigned int *destLen,
 	int res;
 	unsigned char cmf, flg;
 
+	/* check room for at least 2 byte header and 4 byte trailer */
+	if (sourceLen < 6) {
+		return TINF_DATA_ERROR;
+	}
+
 	/* -- get header bytes -- */
 
 	cmf = src[0];

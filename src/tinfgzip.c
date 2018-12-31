@@ -48,7 +48,12 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 	int res;
 	unsigned char flg;
 
-	/* -- check format -- */
+	/* -- check header -- */
+
+	/* check room for at least 10 byte header and 8 byte trailer */
+	if (sourceLen < 18) {
+		return TINF_DATA_ERROR;
+	}
 
 	/* check id bytes */
 	if (src[0] != 0x1f || src[1] != 0x8b) {
@@ -75,30 +80,45 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 
 	/* skip extra data if present */
 	if (flg & FEXTRA) {
-		unsigned int xlen = start[1];
+		unsigned int xlen;
+
+		xlen = start[1];
 		xlen = 256 * xlen + start[0];
+
+		if (xlen > sourceLen - 12) {
+			return TINF_DATA_ERROR;
+		}
+
 		start += xlen + 2;
 	}
 
 	/* skip file name if present */
 	if (flg & FNAME) {
-		while (*start) {
-			++start;
-		}
-		++start;
+		do {
+			if (start - src >= sourceLen) {
+				return TINF_DATA_ERROR;
+			}
+		} while (*start++);
 	}
 
 	/* skip file comment if present */
 	if (flg & FCOMMENT) {
-		while (*start) {
-			++start;
-		}
-		++start;
+		do {
+			if (start - src >= sourceLen) {
+				return TINF_DATA_ERROR;
+			}
+		} while (*start++);
 	}
 
 	/* check header crc if present */
 	if (flg & FHCRC) {
-		unsigned int hcrc = start[1];
+		unsigned int hcrc;
+
+		if (start - src > sourceLen - 2) {
+			return TINF_DATA_ERROR;
+		}
+
+		hcrc = start[1];
 		hcrc = 256 * hcrc + start[0];
 
 		if (hcrc != (tinf_crc32(src, start - src) & 0x0000ffff)) {
@@ -114,6 +134,10 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 	dlen = 256 * dlen + src[sourceLen - 2];
 	dlen = 256 * dlen + src[sourceLen - 3];
 	dlen = 256 * dlen + src[sourceLen - 4];
+
+	if (dlen > *destLen) {
+		return TINF_BUF_ERROR;
+	}
 
 	/* -- get crc32 of decompressed data -- */
 
