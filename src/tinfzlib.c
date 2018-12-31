@@ -52,7 +52,7 @@ int tinf_zlib_uncompress(void *dest, unsigned int *destLen,
 	}
 
 	/* check method is deflate */
-	if ((cmf & 0x0f) != 8) {
+	if ((cmf & 0x0F) != 8) {
 		return TINF_DATA_ERROR;
 	}
 

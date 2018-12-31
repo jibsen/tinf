@@ -51,7 +51,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 	}
 
 	/* check id bytes */
-	if (src[0] != 0x1f || src[1] != 0x8b) {
+	if (src[0] != 0x1F || src[1] != 0x8B) {
 		return TINF_DATA_ERROR;
 	}
 
@@ -64,7 +64,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 	flg = src[3];
 
 	/* check that reserved bits are zero */
-	if (flg & 0xe0) {
+	if (flg & 0xE0) {
 		return TINF_DATA_ERROR;
 	}
 
@@ -116,7 +116,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 		hcrc = start[1];
 		hcrc = 256 * hcrc + start[0];
 
-		if (hcrc != (tinf_crc32(src, start - src) & 0x0000ffff)) {
+		if (hcrc != (tinf_crc32(src, start - src) & 0x0000FFFF)) {
 			return TINF_DATA_ERROR;
 		}
 

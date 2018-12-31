@@ -31,16 +31,16 @@
 #include "tinf.h"
 
 static const unsigned int tinf_crc32tab[16] = {
-	0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac, 0x76dc4190,
-	0x6b6b51f4, 0x4db26158, 0x5005713c, 0xedb88320, 0xf00f9344,
-	0xd6d6a3e8, 0xcb61b38c, 0x9b64c2b0, 0x86d3d2d4, 0xa00ae278,
-	0xbdbdf21c
+	0x00000000, 0x1DB71064, 0x3B6E20C8, 0x26D930AC, 0x76DC4190,
+	0x6B6B51F4, 0x4DB26158, 0x5005713C, 0xEDB88320, 0xF00F9344,
+	0xD6D6A3E8, 0xCB61B38C, 0x9B64C2B0, 0x86D3D2D4, 0xA00AE278,
+	0xBDBDF21C
 };
 
 unsigned int tinf_crc32(const void *data, unsigned int length)
 {
 	const unsigned char *buf = (const unsigned char *) data;
-	unsigned int crc = 0xffffffff;
+	unsigned int crc = 0xFFFFFFFF;
 	unsigned int i;
 
 	if (length == 0) {
@@ -49,9 +49,9 @@ unsigned int tinf_crc32(const void *data, unsigned int length)
 
 	for (i = 0; i < length; ++i) {
 		crc ^= buf[i];
-		crc = tinf_crc32tab[crc & 0x0f] ^ (crc >> 4);
-		crc = tinf_crc32tab[crc & 0x0f] ^ (crc >> 4);
+		crc = tinf_crc32tab[crc & 0x0F] ^ (crc >> 4);
+		crc = tinf_crc32tab[crc & 0x0F] ^ (crc >> 4);
 	}
 
-	return crc ^ 0xffffffff;
+	return crc ^ 0xFFFFFFFF;
 }
