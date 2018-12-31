@@ -30,11 +30,13 @@
 
 #include "tinf.h"
 
-#define FTEXT    1
-#define FHCRC    2
-#define FEXTRA   4
-#define FNAME    8
-#define FCOMMENT 16
+typedef enum {
+	FTEXT    = 1,
+	FHCRC    = 2,
+	FEXTRA   = 4,
+	FNAME    = 8,
+	FCOMMENT = 16
+} tinf_gzip_flag;
 
 int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
                          const void *source, unsigned int sourceLen)

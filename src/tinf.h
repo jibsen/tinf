@@ -46,8 +46,11 @@
 extern "C" {
 #endif
 
-#define TINF_OK             0
-#define TINF_DATA_ERROR    (-3)
+typedef enum {
+	TINF_OK         = 0,
+	TINF_DATA_ERROR = -3,
+	TINF_BUF_ERROR  = -5
+} tinf_error_code;
 
 /* function prototypes */
 
