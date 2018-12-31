@@ -33,6 +33,20 @@ typedef enum {
 	FCOMMENT = 16
 } tinf_gzip_flag;
 
+static unsigned int read_le16(const unsigned char *p)
+{
+	return ((unsigned int) p[0])
+	     | ((unsigned int) p[1] << 8);
+}
+
+static unsigned int read_le32(const unsigned char *p)
+{
+	return ((unsigned int) p[0])
+	     | ((unsigned int) p[1] << 8)
+	     | ((unsigned int) p[2] << 16)
+	     | ((unsigned int) p[3] << 24);
+}
+
 int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
                          const void *source, unsigned int sourceLen)
 {
@@ -75,10 +89,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 
 	/* skip extra data if present */
 	if (flg & FEXTRA) {
-		unsigned int xlen;
-
-		xlen = start[1];
-		xlen = 256 * xlen + start[0];
+		unsigned int xlen = read_le16(start);
 
 		if (xlen > sourceLen - 12) {
 			return TINF_DATA_ERROR;
@@ -113,8 +124,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 			return TINF_DATA_ERROR;
 		}
 
-		hcrc = start[1];
-		hcrc = 256 * hcrc + start[0];
+		hcrc = read_le16(start);
 
 		if (hcrc != (tinf_crc32(src, start - src) & 0x0000FFFF)) {
 			return TINF_DATA_ERROR;
@@ -125,10 +135,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 
 	/* -- get decompressed length -- */
 
-	dlen = src[sourceLen - 1];
-	dlen = 256 * dlen + src[sourceLen - 2];
-	dlen = 256 * dlen + src[sourceLen - 3];
-	dlen = 256 * dlen + src[sourceLen - 4];
+	dlen = read_le32(&src[sourceLen - 4]);
 
 	if (dlen > *destLen) {
 		return TINF_BUF_ERROR;
@@ -136,10 +143,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 
 	/* -- get crc32 of decompressed data -- */
 
-	crc32 = src[sourceLen - 5];
-	crc32 = 256 * crc32 + src[sourceLen - 6];
-	crc32 = 256 * crc32 + src[sourceLen - 7];
-	crc32 = 256 * crc32 + src[sourceLen - 8];
+	crc32 = read_le32(&src[sourceLen - 8]);
 
 	/* -- decompress data -- */
 

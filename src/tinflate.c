@@ -72,6 +72,12 @@ const unsigned char clcidx[] = {
  * -- utility functions -- *
  * ----------------------- */
 
+static unsigned int read_le16(const unsigned char *p)
+{
+	return ((unsigned int) p[0])
+	     | ((unsigned int) p[1] << 8);
+}
+
 /* build extra bits and base tables */
 static void tinf_build_bits_base(unsigned char *bits, unsigned short *base,
                                  int delta, int first)
@@ -353,12 +359,10 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	unsigned int i;
 
 	/* get length */
-	length = d->source[1];
-	length = 256 * length + d->source[0];
+	length = read_le16(d->source);
 
 	/* get one's complement of length */
-	invlength = d->source[3];
-	invlength = 256 * invlength + d->source[2];
+	invlength = read_le16(d->source + 2);
 
 	/* check length */
 	if (length != (~invlength & 0x0000FFFF)) {

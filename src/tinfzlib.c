@@ -25,6 +25,14 @@
 
 #include "tinf.h"
 
+static unsigned int read_be32(const unsigned char *p)
+{
+	return ((unsigned int) p[0] << 24)
+	     | ((unsigned int) p[1] << 16)
+	     | ((unsigned int) p[2] << 8)
+	     | ((unsigned int) p[3]);
+}
+
 int tinf_zlib_uncompress(void *dest, unsigned int *destLen,
                          const void *source, unsigned int sourceLen)
 {
@@ -68,10 +76,7 @@ int tinf_zlib_uncompress(void *dest, unsigned int *destLen,
 
 	/* -- get adler32 checksum -- */
 
-	a32 = src[sourceLen - 4];
-	a32 = 256 * a32 + src[sourceLen - 3];
-	a32 = 256 * a32 + src[sourceLen - 2];
-	a32 = 256 * a32 + src[sourceLen - 1];
+	a32 = read_be32(&src[sourceLen - 4]);
 
 	/* -- inflate -- */
 

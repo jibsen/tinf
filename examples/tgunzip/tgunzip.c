@@ -28,9 +28,17 @@
 
 #include "tinf.h"
 
-void exit_error(const char *what)
+static unsigned int read_le32(const unsigned char *p)
 {
-	printf("ERROR: %s\n", what);
+	return ((unsigned int) p[0])
+	     | ((unsigned int) p[1] << 8)
+	     | ((unsigned int) p[2] << 16)
+	     | ((unsigned int) p[3] << 24);
+}
+
+static void exit_error(const char *what)
+{
+	fprintf(stderr, "ERROR: %s\n", what);
 	exit(1);
 }
 
@@ -83,10 +91,7 @@ int main(int argc, char *argv[])
 
 	/* -- get decompressed length -- */
 
-	dlen = source[len - 1];
-	dlen = 256 * dlen + source[len - 2];
-	dlen = 256 * dlen + source[len - 3];
-	dlen = 256 * dlen + source[len - 4];
+	dlen = read_le32(&source[len - 4]);
 
 	dest = (unsigned char *) malloc(dlen);
 
