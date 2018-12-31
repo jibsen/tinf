@@ -33,17 +33,17 @@
 #ifndef TINF_H_INCLUDED
 #define TINF_H_INCLUDED
 
-/* calling convention */
-#ifndef TINFCC
- #ifdef __WATCOMC__
-  #define TINFCC __cdecl
- #else
-  #define TINFCC
- #endif
-#endif
-
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+/* Calling convention */
+#ifndef TINFCC
+#  ifdef __WATCOMC__
+#    define TINFCC __cdecl
+#  else
+#    define TINFCC
+#  endif
 #endif
 
 typedef enum {
@@ -52,7 +52,7 @@ typedef enum {
 	TINF_BUF_ERROR  = -5
 } tinf_error_code;
 
-/* function prototypes */
+/* Function prototypes */
 
 void TINFCC tinf_init();
 
