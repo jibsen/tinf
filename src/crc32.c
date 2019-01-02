@@ -1,7 +1,7 @@
 /*
  * CRC32 checksum
  *
- * Copyright (c) 1998-2014 Joergen Ibsen
+ * Copyright (c) 1998-2019 Joergen Ibsen
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
