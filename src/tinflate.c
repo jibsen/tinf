@@ -25,6 +25,8 @@
 
 #include "tinf.h"
 
+#include <assert.h>
+
 /* ------------------------------ *
  * -- internal data structures -- *
  * ------------------------------ */
@@ -37,7 +39,7 @@ struct tinf_tree {
 struct tinf_data {
 	const unsigned char *source;
 	unsigned int tag;
-	unsigned int bitcount;
+	int bitcount;
 
 	unsigned char *dest;
 	unsigned int *destLen;
@@ -175,53 +177,54 @@ static void tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
  * -- decode functions -- *
  * ---------------------- */
 
-/* get one bit from source stream */
-static int tinf_getbit(struct tinf_data *d)
+static void tinf_refill(struct tinf_data *d, int num)
 {
-	unsigned int bit;
+	assert(num >= 0 && num <= 32);
 
-	/* check if tag is empty */
-	if (!d->bitcount--) {
-		/* load next tag */
-		d->tag = *d->source++;
-		d->bitcount = 7;
+	/* read bytes until at least num bits available */
+	while (d->bitcount < num) {
+		d->tag |= (unsigned int) *d->source++ << d->bitcount;
+		d->bitcount += 8;
 	}
 
-	/* shift bit out of tag */
-	bit = d->tag & 0x01;
-	d->tag >>= 1;
-
-	return bit;
+	assert(d->bitcount <= 32);
 }
 
-/* read a num bit value from a stream and add base */
-static unsigned int tinf_read_bits(struct tinf_data *d, int num, int base)
+static unsigned int tinf_getbits_no_refill(struct tinf_data *d, int num)
 {
-	unsigned int val = 0;
+	assert(num >= 0 && num <= d->bitcount);
 
-	/* read num bits */
-	if (num) {
-		unsigned int limit = 1 << (num);
-		unsigned int mask;
+	/* get bits from tag */
+	unsigned int bits = d->tag & ((1UL << num) - 1);
 
-		for (mask = 1; mask < limit; mask *= 2) {
-			if (tinf_getbit(d)) {
-				val += mask;
-			}
-		}
-	}
+	/* remove bits from tag */
+	d->tag >>= num;
+	d->bitcount -= num;
 
-	return val + base;
+	return bits;
+}
+
+/* get num bits from source stream */
+static unsigned int tinf_getbits(struct tinf_data *d, int num)
+{
+	tinf_refill(d, num);
+	return tinf_getbits_no_refill(d, num);
+}
+
+/* read a num bit value from stream and add base */
+static unsigned int tinf_getbits_base(struct tinf_data *d, int num, int base)
+{
+	return base + (num ? tinf_getbits(d, num) : 0);
 }
 
 /* given a data stream and a tree, decode a symbol */
-static int tinf_decode_symbol(struct tinf_data *d, struct tinf_tree *t)
+static int tinf_decode_symbol(struct tinf_data *d, const struct tinf_tree *t)
 {
 	int sum = 0, cur = 0, len = 0;
 
 	/* get more bits while code value is above sum */
 	do {
-		cur = 2 * cur + tinf_getbit(d);
+		cur = 2 * cur + tinf_getbits(d, 1);
 
 		++len;
 
@@ -242,13 +245,13 @@ static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 	unsigned int i, num, length;
 
 	/* get 5 bits HLIT (257-286) */
-	hlit = tinf_read_bits(d, 5, 257);
+	hlit = tinf_getbits_base(d, 5, 257);
 
 	/* get 5 bits HDIST (1-32) */
-	hdist = tinf_read_bits(d, 5, 1);
+	hdist = tinf_getbits_base(d, 5, 1);
 
 	/* get 4 bits HCLEN (4-19) */
-	hclen = tinf_read_bits(d, 4, 4);
+	hclen = tinf_getbits_base(d, 4, 4);
 
 	for (i = 0; i < 19; ++i) {
 		lengths[i] = 0;
@@ -257,7 +260,7 @@ static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 	/* read code lengths for code length alphabet */
 	for (i = 0; i < hclen; ++i) {
 		/* get 3 bits code length (0-7) */
-		unsigned int clen = tinf_read_bits(d, 3, 0);
+		unsigned int clen = tinf_getbits(d, 3);
 
 		lengths[clcidx[i]] = clen;
 	}
@@ -274,20 +277,20 @@ static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 			/* copy previous code length 3-6 times (read 2 bits) */
 		    {
 			    unsigned char prev = lengths[num - 1];
-			    for (length = tinf_read_bits(d, 2, 3); length; --length) {
+			    for (length = tinf_getbits_base(d, 2, 3); length; --length) {
 				    lengths[num++] = prev;
 			    }
 		    }
 		    break;
 		case 17:
 			/* repeat code length 0 for 3-10 times (read 3 bits) */
-			for (length = tinf_read_bits(d, 3, 3); length; --length) {
+			for (length = tinf_getbits_base(d, 3, 3); length; --length) {
 				lengths[num++] = 0;
 			}
 			break;
 		case 18:
 			/* repeat code length 0 for 11-138 times (read 7 bits) */
-			for (length = tinf_read_bits(d, 7, 11); length; --length) {
+			for (length = tinf_getbits_base(d, 7, 11); length; --length) {
 				lengths[num++] = 0;
 			}
 			break;
@@ -314,7 +317,7 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 	/* remember current output position */
 	unsigned char *start = d->dest;
 
-	while (1) {
+	for (;;) {
 		int sym = tinf_decode_symbol(d, lt);
 
 		/* check for end of block */
@@ -333,13 +336,13 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 			sym -= 257;
 
 			/* possibly get more bits from length code */
-			length = tinf_read_bits(d, length_bits[sym],
+			length = tinf_getbits_base(d, length_bits[sym],
 			                        length_base[sym]);
 
 			dist = tinf_decode_symbol(d, dt);
 
 			/* possibly get more bits from distance code */
-			offs = tinf_read_bits(d, dist_bits[dist],
+			offs = tinf_getbits_base(d, dist_bits[dist],
 			                      dist_base[dist]);
 
 			/* copy match */
@@ -377,6 +380,7 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	}
 
 	/* make sure we start next block on a byte boundary */
+	d->tag = 0;
 	d->bitcount = 0;
 
 	*d->destLen += length;
@@ -429,6 +433,7 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 
 	/* initialise data */
 	d.source = (const unsigned char *) source;
+	d.tag = 0;
 	d.bitcount = 0;
 
 	d.dest = (unsigned char *) dest;
@@ -441,10 +446,10 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 		int res;
 
 		/* read final block flag */
-		bfinal = tinf_getbit(&d);
+		bfinal = tinf_getbits(&d, 1);
 
 		/* read block type (2 bits) */
-		btype = tinf_read_bits(&d, 2, 0);
+		btype = tinf_getbits(&d, 2);
 
 		/* decompress block */
 		switch (btype) {
