@@ -1,17 +1,35 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.0)
 
 project(tinf C)
 
-option(BUILD_TEST "Build unit test" OFF)
+include(CTest)
 
-include_directories(${PROJECT_SOURCE_DIR})
+# Check if tinf is the top-level project (standalone), or a subproject
+set(tinf_standalone FALSE)
+get_directory_property(tinf_parent_directory PARENT_DIRECTORY)
+if(tinf_parent_directory STREQUAL "")
+  set(tinf_standalone TRUE)
+endif()
+unset(tinf_parent_directory)
 
-add_library(tinf src/tinflate.c src/tinfgzip.c src/tinfzlib.c src/adler32.c src/crc32.c src/tinf.h)
+#
+# tinf
+#
+add_library(tinf
+  src/adler32.c
+  src/crc32.c
+  src/tinfgzip.c
+  src/tinflate.c
+  src/tinfzlib.c
+  src/tinf.h
+)
+target_include_directories(tinf PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 
-if(BUILD_TEST)
-	add_executable(test_tinf test/test_tinf.c test/greatest.h src/tinf.h)
-	target_link_libraries(test_tinf tinf)
-
-	enable_testing()
-	add_test(test_tinf test_tinf)
+#
+# tgunzip
+#
+add_executable(tgunzip examples/tgunzip/tgunzip.c)
+target_link_libraries(tgunzip tinf)
+if(MSVC)
+  target_compile_definitions(tgunzip PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
