@@ -52,23 +52,16 @@ struct tinf_data {
  * -- uninitialized global data (static structures) -- *
  * --------------------------------------------------- */
 
-struct tinf_tree sltree; /* fixed length/symbol tree */
-struct tinf_tree sdtree; /* fixed distance tree */
+static struct tinf_tree sltree; /* fixed length/symbol tree */
+static struct tinf_tree sdtree; /* fixed distance tree */
 
 /* extra bits and base tables for length codes */
-unsigned char length_bits[30];
-unsigned short length_base[30];
+static unsigned char length_bits[30];
+static unsigned short length_base[30];
 
 /* extra bits and base tables for distance codes */
-unsigned char dist_bits[30];
-unsigned short dist_base[30];
-
-/* special ordering of code length codes */
-const unsigned char clcidx[] = {
-	16, 17, 18, 0, 8, 7, 9, 6,
-	10, 5, 11, 4, 12, 3, 13, 2,
-	14, 1, 15
-};
+static unsigned char dist_bits[30];
+static unsigned short dist_base[30];
 
 /* ----------------------- *
  * -- utility functions -- *
@@ -241,6 +234,11 @@ static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 {
 	struct tinf_tree code_tree;
 	unsigned char lengths[288 + 32];
+	/* special ordering of code length codes */
+	static const unsigned char clcidx[19] = {
+		16, 17, 18, 0,  8, 7,  9, 6, 10, 5,
+		11,  4, 12, 3, 13, 2, 14, 1, 15
+	};
 	unsigned int hlit, hdist, hclen;
 	unsigned int i, num, length;
 
