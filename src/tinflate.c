@@ -103,11 +103,13 @@ static void tinf_build_fixed_trees(struct tinf_tree *lt, struct tinf_tree *dt)
 }
 
 /* given an array of code lengths, build a tree */
-static void tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
-                            unsigned int num)
+static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
+                           unsigned int num)
 {
 	unsigned short offs[16];
 	unsigned int i, sum;
+
+	assert(num < 288);
 
 	/* clear code length count table */
 	for (i = 0; i < 16; ++i) {
@@ -133,6 +135,8 @@ static void tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
 			t->trans[offs[lengths[i]]++] = i;
 		}
 	}
+
+	return TINF_OK;
 }
 
 /* ---------------------- *
@@ -202,10 +206,12 @@ static int tinf_decode_symbol(struct tinf_data *d, const struct tinf_tree *t)
 }
 
 /* given a data stream, decode dynamic trees from it */
-static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
-                              struct tinf_tree *dt)
+static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
+                             struct tinf_tree *dt)
 {
 	unsigned char lengths[288 + 32];
+	int res;
+
 	/* special ordering of code length codes */
 	static const unsigned char clcidx[19] = {
 		16, 17, 18, 0,  8, 7,  9, 6, 10, 5,
@@ -236,7 +242,10 @@ static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 	}
 
 	/* build code length tree (in literal/length tree to save space) */
-	tinf_build_tree(lt, lengths, 19);
+	res = tinf_build_tree(lt, lengths, 19);
+	if (res != TINF_OK) {
+		return res;
+	}
 
 	/* decode code lengths for the dynamic trees */
 	for (num = 0; num < hlit + hdist; ) {
@@ -270,8 +279,16 @@ static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 	}
 
 	/* build dynamic trees */
-	tinf_build_tree(lt, lengths, hlit);
-	tinf_build_tree(dt, lengths + hlit, hdist);
+	res = tinf_build_tree(lt, lengths, hlit);
+	if (res != TINF_OK) {
+		return res;
+	}
+	res = tinf_build_tree(dt, lengths + hlit, hdist);
+	if (res != TINF_OK) {
+		return res;
+	}
+
+	return TINF_OK;
 }
 
 /* ----------------------------- *
@@ -395,7 +412,11 @@ static int tinf_inflate_fixed_block(struct tinf_data *d)
 static int tinf_inflate_dynamic_block(struct tinf_data *d)
 {
 	/* decode trees from stream */
-	tinf_decode_trees(d, &d->ltree, &d->dtree);
+	int res = tinf_decode_trees(d, &d->ltree, &d->dtree);
+
+	if (res != TINF_OK) {
+		return res;
+	}
 
 	/* decode block using decoded trees */
 	return tinf_inflate_block_data(d, &d->ltree, &d->dtree);
@@ -453,11 +474,12 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 			res = tinf_inflate_dynamic_block(&d);
 			break;
 		default:
-			return TINF_DATA_ERROR;
+			res = TINF_DATA_ERROR;
+			break;
 		}
 
 		if (res != TINF_OK) {
-			return TINF_DATA_ERROR;
+			return res;
 		}
 	} while (!bfinal);
 
