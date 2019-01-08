@@ -38,7 +38,7 @@ static unsigned int read_le32(const unsigned char *p)
 
 static void exit_error(const char *what)
 {
-	fprintf(stderr, "ERROR: %s\n", what);
+	fprintf(stderr, "tgunzip: %s\n", what);
 	exit(1);
 }
 
