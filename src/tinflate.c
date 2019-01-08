@@ -210,15 +210,16 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
                              struct tinf_tree *dt)
 {
 	unsigned char lengths[288 + 32];
-	int res;
 
 	/* special ordering of code length codes */
 	static const unsigned char clcidx[19] = {
 		16, 17, 18, 0,  8, 7,  9, 6, 10, 5,
 		11,  4, 12, 3, 13, 2, 14, 1, 15
 	};
+
 	unsigned int hlit, hdist, hclen;
 	unsigned int i, num, length;
+	int res;
 
 	/* get 5 bits HLIT (257-286) */
 	hlit = tinf_getbits_base(d, 5, 257);
@@ -243,6 +244,7 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 
 	/* build code length tree (in literal/length tree to save space) */
 	res = tinf_build_tree(lt, lengths, 19);
+
 	if (res != TINF_OK) {
 		return res;
 	}
@@ -280,10 +282,13 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 
 	/* build dynamic trees */
 	res = tinf_build_tree(lt, lengths, hlit);
+
 	if (res != TINF_OK) {
 		return res;
 	}
+
 	res = tinf_build_tree(dt, lengths + hlit, hdist);
+
 	if (res != TINF_OK) {
 		return res;
 	}
@@ -404,6 +409,7 @@ static int tinf_inflate_fixed_block(struct tinf_data *d)
 {
 	/* build fixed huffman trees */
 	tinf_build_fixed_trees(&d->ltree, &d->dtree);
+
 	/* decode block using fixed trees */
 	return tinf_inflate_block_data(d, &d->ltree, &d->dtree);
 }
