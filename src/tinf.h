@@ -1,8 +1,6 @@
 /*
  * tinf - tiny inflate library (inflate, gzip, zlib)
  *
- * version 1.0.0
- *
  * Copyright (c) 2003-2019 Joergen Ibsen
  *
  * This software is provided 'as-is', without any express or implied
@@ -32,7 +30,11 @@
 extern "C" {
 #endif
 
-/* Calling convention */
+#define TINF_VER_MAJOR 1        /**< Major version number */
+#define TINF_VER_MINOR 0        /**< Minor version number */
+#define TINF_VER_PATCH 0        /**< Patch version number */
+#define TINF_VER_STRING "1.0.0" /**< Version number as a string */
+
 #ifndef TINFCC
 #  ifdef __WATCOMC__
 #    define TINFCC __cdecl
@@ -41,27 +43,85 @@ extern "C" {
 #  endif
 #endif
 
+/**
+ * Status codes returned.
+ *
+ * @see tinf_uncompress, tinf_gzip_uncompress, tinf_zlib_uncompress
+ */
 typedef enum {
 	TINF_OK         = 0,
 	TINF_DATA_ERROR = -3,
 	TINF_BUF_ERROR  = -5
 } tinf_error_code;
 
-/* Function prototypes */
-
+/**
+ * Initialize global data used by tinf.
+ *
+ * Must be called once before using any of the decompression functions.
+ */
 void TINFCC tinf_init();
 
+/**
+ * Decompress `sourceLen` bytes of deflate data from `source` to `dest`.
+ *
+ * The variable `destLen` points to must contain the size of `dest` on entry,
+ * and will be set to the size of the decompressed data on success.
+ *
+ * @param dest pointer to where to place decompressed data
+ * @param destLen pointer to variable containing size of `dest`
+ * @param source pointer to compressed data
+ * @param sourceLen size of compressed data
+ * @return `TINF_OK` on success, error code on error
+ */
 int TINFCC tinf_uncompress(void *dest, unsigned int *destLen,
                            const void *source, unsigned int sourceLen);
 
+/**
+ * Decompress `sourceLen` bytes of gzip data from `source` to `dest`.
+ *
+ * The variable `destLen` points to must contain the size of `dest` on entry,
+ * and will be set to the size of the decompressed data on success.
+ *
+ * @param dest pointer to where to place decompressed data
+ * @param destLen pointer to variable containing size of `dest`
+ * @param source pointer to compressed data
+ * @param sourceLen size of compressed data
+ * @return `TINF_OK` on success, error code on error
+ */
 int TINFCC tinf_gzip_uncompress(void *dest, unsigned int *destLen,
                                 const void *source, unsigned int sourceLen);
 
+/**
+ * Decompress `sourceLen` bytes of zlib data from `source` to `dest`.
+ *
+ * The variable `destLen` points to must contain the size of `dest` on entry,
+ * and will be set to the size of the decompressed data on success.
+ *
+ * @param dest pointer to where to place decompressed data
+ * @param destLen pointer to variable containing size of `dest`
+ * @param source pointer to compressed data
+ * @param sourceLen size of compressed data
+ * @return `TINF_OK` on success, error code on error
+ */
 int TINFCC tinf_zlib_uncompress(void *dest, unsigned int *destLen,
                                 const void *source, unsigned int sourceLen);
 
+/**
+ * Compute Adler-32 checksum of `length` bytes starting at `data`.
+ *
+ * @param data pointer to data
+ * @param length size of data
+ * @return Adler-32 checksum
+ */
 unsigned int TINFCC tinf_adler32(const void *data, unsigned int length);
 
+/**
+ * Compute CRC32 checksum of `length` bytes starting at `data`.
+ *
+ * @param data pointer to data
+ * @param length size of data
+ * @return CRC32 checksum
+ */
 unsigned int TINFCC tinf_crc32(const void *data, unsigned int length);
 
 #ifdef __cplusplus
