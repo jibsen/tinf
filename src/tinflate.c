@@ -226,9 +226,13 @@ static int tinf_decode_symbol(struct tinf_data *d, const struct tinf_tree *t)
 
 		++len;
 
+		assert(len <= 15);
+
 		sum += t->table[len];
 		cur -= t->table[len];
 	} while (cur >= 0);
+
+	assert(sum + cur >= 0 && sum + cur < 288);
 
 	return t->trans[sum + cur];
 }
