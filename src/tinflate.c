@@ -60,14 +60,6 @@ struct tinf_data {
 static struct tinf_tree sltree; /* fixed length/symbol tree */
 static struct tinf_tree sdtree; /* fixed distance tree */
 
-/* extra bits and base tables for length codes */
-static unsigned char length_bits[30];
-static unsigned short length_base[30];
-
-/* extra bits and base tables for distance codes */
-static unsigned char dist_bits[30];
-static unsigned short dist_base[30];
-
 /* ----------------------- *
  * -- utility functions -- *
  * ----------------------- */
@@ -76,27 +68,6 @@ static unsigned int read_le16(const unsigned char *p)
 {
 	return ((unsigned int) p[0])
 	     | ((unsigned int) p[1] << 8);
-}
-
-/* build extra bits and base tables */
-static void tinf_build_bits_base(unsigned char *bits, unsigned short *base,
-                                 int delta, int first)
-{
-	int i, sum;
-
-	/* build bits table */
-	for (i = 0; i < delta; ++i) {
-		bits[i] = 0;
-	}
-	for (i = 0; i < 30 - delta; ++i) {
-		bits[i + delta] = i / delta;
-	}
-
-	/* build base table */
-	for (sum = first, i = 0; i < 30; ++i) {
-		base[i] = sum;
-		sum += 1 << bits[i];
-	}
 }
 
 /* build the fixed huffman trees */
@@ -321,6 +292,32 @@ static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
                                    struct tinf_tree *dt)
 {
+	/* extra bits and base tables for length codes */
+	static const unsigned char length_bits[30] = {
+		0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+		1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
+		4, 4, 4, 4, 5, 5, 5, 5, 0, 127
+	};
+
+	static const unsigned short length_base[30] = {
+		 3,  4,  5,   6,   7,   8,   9,  10,  11,  13,
+		15, 17, 19,  23,  27,  31,  35,  43,  51,  59,
+		67, 83, 99, 115, 131, 163, 195, 227, 258,   0
+	};
+
+	/* extra bits and base tables for distance codes */
+	static const unsigned char dist_bits[30] = {
+		0, 0,  0,  0,  1,  1,  2,  2,  3,  3,
+		4, 4,  5,  5,  6,  6,  7,  7,  8,  8,
+		9, 9, 10, 10, 11, 11, 12, 12, 13, 13
+	};
+
+	static const unsigned short dist_base[30] = {
+		   1,    2,    3,    4,    5,    7,    9,    13,    17,    25,
+		  33,   49,   65,   97,  129,  193,  257,   385,   513,   769,
+		1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577
+	};
+
 	/* remember current output position */
 	unsigned char *start = d->dest;
 
@@ -421,14 +418,6 @@ void tinf_init()
 {
 	/* build fixed huffman trees */
 	tinf_build_fixed_trees(&sltree, &sdtree);
-
-	/* build extra bits and base tables */
-	tinf_build_bits_base(length_bits, length_base, 4, 3);
-	tinf_build_bits_base(dist_bits, dist_base, 2, 1);
-
-	/* fix a special case */
-	length_bits[28] = 0;
-	length_base[28] = 258;
 }
 
 /* inflate stream from source to dest */
