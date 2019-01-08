@@ -245,29 +245,27 @@ static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 		switch (sym) {
 		case 16:
 			/* copy previous code length 3-6 times (read 2 bits) */
-		    {
-			    unsigned char prev = lengths[num - 1];
-			    for (length = tinf_getbits_base(d, 2, 3); length; --length) {
-				    lengths[num++] = prev;
-			    }
-		    }
+			sym = lengths[num - 1];
+			length = tinf_getbits_base(d, 2, 3);
 		    break;
 		case 17:
 			/* repeat code length 0 for 3-10 times (read 3 bits) */
-			for (length = tinf_getbits_base(d, 3, 3); length; --length) {
-				lengths[num++] = 0;
-			}
+			sym = 0;
+			length = tinf_getbits_base(d, 3, 3);
 			break;
 		case 18:
 			/* repeat code length 0 for 11-138 times (read 7 bits) */
-			for (length = tinf_getbits_base(d, 7, 11); length; --length) {
-				lengths[num++] = 0;
-			}
+			sym = 0;
+			length = tinf_getbits_base(d, 7, 11);
 			break;
 		default:
 			/* values 0-15 represent the actual code lengths */
-			lengths[num++] = sym;
+			length = 1;
 			break;
+		}
+
+		while (length--) {
+			lengths[num++] = sym;
 		}
 	}
 
