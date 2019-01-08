@@ -205,7 +205,6 @@ static int tinf_decode_symbol(struct tinf_data *d, const struct tinf_tree *t)
 static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
                               struct tinf_tree *dt)
 {
-	struct tinf_tree code_tree;
 	unsigned char lengths[288 + 32];
 	/* special ordering of code length codes */
 	static const unsigned char clcidx[19] = {
@@ -236,12 +235,12 @@ static void tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 		lengths[clcidx[i]] = clen;
 	}
 
-	/* build code length tree */
-	tinf_build_tree(&code_tree, lengths, 19);
+	/* build code length tree (in literal/length tree to save space) */
+	tinf_build_tree(lt, lengths, 19);
 
 	/* decode code lengths for the dynamic trees */
 	for (num = 0; num < hlit + hdist; ) {
-		int sym = tinf_decode_symbol(d, &code_tree);
+		int sym = tinf_decode_symbol(d, lt);
 
 		switch (sym) {
 		case 16:
