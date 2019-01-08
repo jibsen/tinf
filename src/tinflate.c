@@ -49,8 +49,8 @@ struct tinf_data {
 	unsigned char *dest;
 	unsigned int *destLen;
 
-	struct tinf_tree ltree; /* dynamic length/symbol tree */
-	struct tinf_tree dtree; /* dynamic distance tree */
+	struct tinf_tree ltree; /* literal/length tree */
+	struct tinf_tree dtree; /* distance tree */
 };
 
 /* ----------------------- *
@@ -69,7 +69,7 @@ static void tinf_build_fixed_trees(struct tinf_tree *lt, struct tinf_tree *dt)
 	int i;
 
 	/* build fixed length tree */
-	for (i = 0; i < 7; ++i) {
+	for (i = 0; i < 16; ++i) {
 		lt->table[i] = 0;
 	}
 
@@ -91,7 +91,7 @@ static void tinf_build_fixed_trees(struct tinf_tree *lt, struct tinf_tree *dt)
 	}
 
 	/* build fixed distance tree */
-	for (i = 0; i < 5; ++i) {
+	for (i = 0; i < 16; ++i) {
 		dt->table[i] = 0;
 	}
 
