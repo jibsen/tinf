@@ -53,13 +53,6 @@ struct tinf_data {
 	struct tinf_tree dtree; /* dynamic distance tree */
 };
 
-/* --------------------------------------------------- *
- * -- uninitialized global data (static structures) -- *
- * --------------------------------------------------- */
-
-static struct tinf_tree sltree; /* fixed length/symbol tree */
-static struct tinf_tree sdtree; /* fixed distance tree */
-
 /* ----------------------- *
  * -- utility functions -- *
  * ----------------------- */
@@ -395,8 +388,10 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 /* inflate a block of data compressed with fixed huffman trees */
 static int tinf_inflate_fixed_block(struct tinf_data *d)
 {
+	/* build fixed huffman trees */
+	tinf_build_fixed_trees(&d->ltree, &d->dtree);
 	/* decode block using fixed trees */
-	return tinf_inflate_block_data(d, &sltree, &sdtree);
+	return tinf_inflate_block_data(d, &d->ltree, &d->dtree);
 }
 
 /* inflate a block of data compressed with dynamic huffman trees */
@@ -416,8 +411,7 @@ static int tinf_inflate_dynamic_block(struct tinf_data *d)
 /* initialize global (static) data */
 void tinf_init()
 {
-	/* build fixed huffman trees */
-	tinf_build_fixed_trees(&sltree, &sdtree);
+	return;
 }
 
 /* inflate stream from source to dest */
