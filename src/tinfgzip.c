@@ -147,8 +147,12 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 
 	/* -- decompress data -- */
 
+	if ((src + sourceLen) - start < 8) {
+		return TINF_DATA_ERROR;
+	}
+
 	res = tinf_uncompress(dst, destLen, start,
-	                      src + sourceLen - start - 8);
+	                      (src + sourceLen) - start - 8);
 
 	if (res != TINF_OK) {
 		return TINF_DATA_ERROR;
