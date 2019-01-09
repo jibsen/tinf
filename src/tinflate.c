@@ -278,6 +278,9 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 		switch (sym) {
 		case 16:
 			/* copy previous code length 3-6 times (read 2 bits) */
+			if (num == 0) {
+				return TINF_DATA_ERROR;
+			}
 			sym = lengths[num - 1];
 			length = tinf_getbits_base(d, 2, 3);
 			break;
@@ -295,6 +298,10 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 			/* values 0-15 represent the actual code lengths */
 			length = 1;
 			break;
+		}
+
+		if (length > hlit + hdist - num) {
+			return TINF_DATA_ERROR;
 		}
 
 		while (length--) {
