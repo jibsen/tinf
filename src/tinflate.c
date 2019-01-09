@@ -158,10 +158,12 @@ static void tinf_refill(struct tinf_data *d, int num)
 
 static unsigned int tinf_getbits_no_refill(struct tinf_data *d, int num)
 {
+	unsigned int bits;
+
 	assert(num >= 0 && num <= d->bitcount);
 
 	/* get bits from tag */
-	unsigned int bits = d->tag & ((1UL << num) - 1);
+	bits = d->tag & ((1UL << num) - 1);
 
 	/* remove bits from tag */
 	d->tag >>= num;
@@ -258,7 +260,7 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 			/* copy previous code length 3-6 times (read 2 bits) */
 			sym = lengths[num - 1];
 			length = tinf_getbits_base(d, 2, 3);
-		    break;
+			break;
 		case 17:
 			/* repeat code length 0 for 3-10 times (read 3 bits) */
 			sym = 0;
