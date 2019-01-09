@@ -240,6 +240,18 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 	/* get 4 bits HCLEN (4-19) */
 	hclen = tinf_getbits_base(d, 4, 4);
 
+	/* The RFC limits the range of HLIT to 286, but lists HDIST as range
+	 * 1-32, even though distance codes 30 and 31 have no meaning. While
+	 * we could allow the full range of HLIT and HDIST to make it possible
+	 * to decode the static trees with this function, we consider it an
+	 * error here.
+	 *
+	 * See also: https://github.com/madler/zlib/issues/82
+	 */
+	if (hlit > 286 || hdist > 30) {
+		return TINF_DATA_ERROR;
+	}
+
 	for (i = 0; i < 19; ++i) {
 		lengths[i] = 0;
 	}
