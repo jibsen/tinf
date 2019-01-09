@@ -43,6 +43,7 @@ struct tinf_tree {
 
 struct tinf_data {
 	const unsigned char *source;
+	const unsigned char *sourceEnd;
 	unsigned int tag;
 	int bitcount;
 
@@ -150,7 +151,9 @@ static void tinf_refill(struct tinf_data *d, int num)
 
 	/* read bytes until at least num bits available */
 	while (d->bitcount < num) {
-		d->tag |= (unsigned int) *d->source++ << d->bitcount;
+		if (d->source != d->sourceEnd) {
+			d->tag |= (unsigned int) *d->source++ << d->bitcount;
+		}
 		d->bitcount += 8;
 	}
 
@@ -389,6 +392,10 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	unsigned int length, invlength;
 	unsigned int i;
 
+	if (d->sourceEnd - d->source < 4) {
+		return TINF_DATA_ERROR;
+	}
+
 	/* get length */
 	length = read_le16(d->source);
 
@@ -401,6 +408,10 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	}
 
 	d->source += 4;
+
+	if (d->sourceEnd - d->source < length) {
+		return TINF_DATA_ERROR;
+	}
 
 	if (d->destEnd - d->dest < length) {
 		return TINF_BUF_ERROR;
@@ -463,6 +474,7 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 
 	/* initialise data */
 	d.source = (const unsigned char *) source;
+	d.sourceEnd = d.source + sourceLen;
 	d.tag = 0;
 	d.bitcount = 0;
 
