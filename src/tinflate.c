@@ -493,3 +493,23 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 
 	return TINF_OK;
 }
+
+/* clang -g -O1 -fsanitize=fuzzer,address -DTINF_FUZZING tinflate.c */
+#if defined(TINF_FUZZING)
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+unsigned char depacked[64 * 1024];
+
+extern int
+LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+{
+	if (size > UINT_MAX / 2) { return 0; }
+	unsigned int destLen = sizeof(depacked);
+	tinf_uncompress(depacked, &destLen, data, size);
+	return 0;
+}
+#endif
