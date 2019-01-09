@@ -47,7 +47,8 @@ struct tinf_data {
 	int bitcount;
 
 	unsigned char *dest;
-	unsigned int *destLen;
+	unsigned char *destEnd;
+	unsigned int destLen;
 
 	struct tinf_tree ltree; /* literal/length tree */
 	struct tinf_tree dtree; /* distance tree */
@@ -332,20 +333,20 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 		1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577
 	};
 
-	/* remember current output position */
-	unsigned char *start = d->dest;
-
 	for (;;) {
 		int sym = tinf_decode_symbol(d, lt);
 
 		/* check for end of block */
 		if (sym == 256) {
-			*d->destLen += d->dest - start;
 			return TINF_OK;
 		}
 
 		if (sym < 256) {
+			if (d->dest == d->destEnd) {
+				return TINF_BUF_ERROR;
+			}
 			*d->dest++ = sym;
+			d->destLen++;
 		}
 		else {
 			int length, dist, offs;
@@ -363,12 +364,21 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 			offs = tinf_getbits_base(d, dist_bits[dist],
 			                      dist_base[dist]);
 
+			if (offs > d->destLen) {
+				return TINF_DATA_ERROR;
+			}
+
+			if (d->destEnd - d->dest < length) {
+				return TINF_BUF_ERROR;
+			}
+
 			/* copy match */
 			for (i = 0; i < length; ++i) {
 				d->dest[i] = d->dest[i - offs];
 			}
 
 			d->dest += length;
+			d->destLen += length;
 		}
 	}
 }
@@ -392,6 +402,10 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 
 	d->source += 4;
 
+	if (d->destEnd - d->dest < length) {
+		return TINF_BUF_ERROR;
+	}
+
 	/* copy block */
 	for (i = length; i; --i) {
 		*d->dest++ = *d->source++;
@@ -401,7 +415,7 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	d->tag = 0;
 	d->bitcount = 0;
 
-	*d->destLen += length;
+	d->destLen += length;
 
 	return TINF_OK;
 }
@@ -453,7 +467,8 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 	d.bitcount = 0;
 
 	d.dest = (unsigned char *) dest;
-	d.destLen = destLen;
+	d.destEnd = d.dest + *destLen;
+	d.destLen = 0;
 
 	*destLen = 0;
 
@@ -490,6 +505,8 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 			return res;
 		}
 	} while (!bfinal);
+
+	*destLen = d.destLen;
 
 	return TINF_OK;
 }

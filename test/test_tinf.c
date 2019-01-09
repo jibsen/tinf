@@ -38,6 +38,19 @@ static const unsigned char robuffer[] = { 0 };
 
 static unsigned char buffer[4096];
 
+struct packed_data {
+	unsigned int src_size;
+	unsigned int depacked_size;
+	const unsigned char data[32];
+};
+
+static const struct packed_data inflate_errors[] = {
+	/* Static literal writing one byte past end */
+	{ 4, 1, { 0x63, 0x60, 0x00, 0x00 } },
+	/* Static match writing one byte past end */
+	{ 4, 3, { 0x63, 0x00, 0x02, 0x00 } },
+};
+
 /* tinflate */
 
 TEST inflate_empty_no_literals(void)
@@ -208,6 +221,23 @@ TEST inflate_code_length_codes(void)
 	PASS();
 }
 
+/* Test tinf_uncompress on compressed data with errors */
+TEST inflate_error_cases(void)
+{
+	int res;
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(inflate_errors); ++i) {
+		unsigned int size = inflate_errors[i].depacked_size;
+		res = tinf_uncompress(buffer, &size,
+		                      inflate_errors[i].data, inflate_errors[i].src_size);
+
+		ASSERT(res != TINF_OK);
+	}
+
+	PASS();
+}
+
 SUITE(tinflate)
 {
 	RUN_TEST(inflate_empty_no_literals);
@@ -216,6 +246,8 @@ SUITE(tinflate)
 	RUN_TEST(inflate_max_matchlen);
 	RUN_TEST(inflate_max_matchlen_alt);
 	RUN_TEST(inflate_code_length_codes);
+
+	RUN_TEST(inflate_error_cases);
 }
 
 /* tinfzlib */
