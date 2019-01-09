@@ -46,6 +46,7 @@ struct tinf_data {
 	const unsigned char *sourceEnd;
 	unsigned int tag;
 	int bitcount;
+	int overflow;
 
 	unsigned char *dest;
 	unsigned char *destEnd;
@@ -153,6 +154,9 @@ static void tinf_refill(struct tinf_data *d, int num)
 	while (d->bitcount < num) {
 		if (d->source != d->sourceEnd) {
 			d->tag |= (unsigned int) *d->source++ << d->bitcount;
+		}
+		else {
+			d->overflow = 1;
 		}
 		d->bitcount += 8;
 	}
@@ -339,6 +343,11 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 	for (;;) {
 		int sym = tinf_decode_symbol(d, lt);
 
+		/* check for overflow in bit reader */
+		if (d->overflow) {
+			return TINF_DATA_ERROR;
+		}
+
 		/* check for end of block */
 		if (sym == 256) {
 			return TINF_OK;
@@ -477,6 +486,7 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 	d.sourceEnd = d.source + sourceLen;
 	d.tag = 0;
 	d.bitcount = 0;
+	d.overflow = 0;
 
 	d.dest = (unsigned char *) dest;
 	d.destEnd = d.dest + *destLen;
@@ -517,6 +527,11 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 			return res;
 		}
 	} while (!bfinal);
+
+	/* check for overflow in bit reader */
+	if (d.overflow) {
+		return TINF_DATA_ERROR;
+	}
 
 	*destLen = d.destLen;
 

@@ -61,6 +61,8 @@ static const struct packed_data inflate_errors[] = {
 	/* Uncompressed block writing one past end */
 	{ 7, 1, { 0x01, 0x02, 0x00, 0xFD, 0xFF, 0x42, 0x42 } },
 
+	/* Static incomplete */
+	{ 2, 1, { 0x63, 0x00 } },
 	/* Static literal writing one byte past end */
 	{ 4, 1, { 0x63, 0x60, 0x00, 0x00 } },
 	/* Static match writing one byte past end */
