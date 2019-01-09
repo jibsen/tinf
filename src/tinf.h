@@ -31,9 +31,9 @@ extern "C" {
 #endif
 
 #define TINF_VER_MAJOR 1        /**< Major version number */
-#define TINF_VER_MINOR 0        /**< Minor version number */
+#define TINF_VER_MINOR 1        /**< Minor version number */
 #define TINF_VER_PATCH 0        /**< Patch version number */
-#define TINF_VER_STRING "1.0.0" /**< Version number as a string */
+#define TINF_VER_STRING "1.1.0" /**< Version number as a string */
 
 #ifndef TINFCC
 #  ifdef __WATCOMC__
