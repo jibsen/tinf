@@ -8,13 +8,14 @@ Copyright (c) 2003-2019 Joergen Ibsen
 
 <http://www.ibsensoftware.com/>
 
+[![Build Status](https://dev.azure.com/jibsenorg/jibsen/_apis/build/status/jibsen.tinf?branchName=master)](https://dev.azure.com/jibsenorg/jibsen/_build/latest?definitionId=3?branchName=master)
 
 About
 -----
 
 tinf is a small library implementing the decompression algorithm for the
-deflate compressed data format (called 'inflate'). Deflate compression is
-used in e.g. zlib, gzip, zip and png.
+[deflate][wpdeflate] compressed data format (called 'inflate'). Deflate
+compression is used in e.g. zlib, gzip, zip, and png.
 
 I wrote it because I needed a small in-memory zlib decompressor for a self-
 extracting archive, and the zlib library added 15k to my program. The tinf
@@ -25,134 +26,81 @@ zlib library has many more features, is more secure, and mostly faster.
 But if you have a project that calls for a small and simple deflate
 decompressor, give it a try :-)
 
-While the implementation should be fairly compliant, it does assume it is
-given valid compressed data, and that there is sufficient space for the
-decompressed data.
+[wpdeflate]: https://en.wikipedia.org/wiki/DEFLATE
 
-Simple wrappers for decompressing zlib streams and gzip'ed data in memory
-are supplied.
+
+Usage
+-----
+
+The include file `src/tinf.h` contains documentation in the form of
+[doxygen][] comments.
+
+Wrappers for decompressing zlib and gzip data in memory are supplied.
 
 tgunzip, an example command-line gzip decompressor in C, is included.
 
+tinf uses [CMake][] to generate build systems. To create one for the tools on
+your platform, and build tinf, use something along the lines of:
+
+~~~sh
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release
+~~~
+
+You can also simply compile the source files and link them into your project.
+CMake just provides an easy way to build and test across various platforms and
+toolsets.
+
+[doxygen]: http://www.doxygen.org/
+[CMake]: http://www.cmake.org/
+
+
+Notes
+-----
+
+While the implementation should be fairly compliant, it does assume it is
+given valid compressed data, and that there is sufficient space for the
+decompressed data. This means it is **important** to only use tinf to
+decompress data from trusted sources.
+
+tinf requires int to be at least 32-bit.
+
 The inflate algorithm and data format are from 'DEFLATE Compressed Data
-Format Specification version 1.3' ([RFC 1951][1]).
+Format Specification version 1.3' ([RFC 1951][deflate]).
 
 The zlib data format is from 'ZLIB Compressed Data Format Specification
-version 3.3' ([RFC 1950][2]).
+version 3.3' ([RFC 1950][zlib]).
 
 The gzip data format is from 'GZIP file format specification version 4.3'
-([RFC 1952][3]).
+([RFC 1952][gzip]).
 
 Ideas for future versions:
 
-- the fixed Huffman trees could be built by `tinf_decode_trees()`
-  using a small table
-- memory for the `TINF_DATA` object should be passed, to avoid using
-  more than 1k of stack space
-- wrappers for unpacking zip archives and png images
-- implement more in x86 assembler
-- more sanity checks
-- in `tinf_uncompress`, the (entry value of) `destLen` and `sourceLen`
-  are not used
-- blocking of some sort, so everything does not have to be in memory
-- optional table-based huffman decoder
+  - More safety checks
+  - Memory for the `tinf_data` object should be passed, to avoid using more
+    than 1k of stack space
+  - Wrappers for unpacking zip archives and png images
+  - Blocking of some sort, so everything does not have to be in memory
+  - Optional table-based Huffman decoder
 
-[1]: http://www.rfc-editor.org/rfc/rfc1951.txt
-[2]: http://www.rfc-editor.org/rfc/rfc1950.txt
-[3]: http://www.rfc-editor.org/rfc/rfc1952.txt
+[deflate]: http://www.rfc-editor.org/rfc/rfc1951.txt
+[zlib]: http://www.rfc-editor.org/rfc/rfc1950.txt
+[gzip]: http://www.rfc-editor.org/rfc/rfc1952.txt
 
 
-Functionality
--------------
+Related Projects
+----------------
 
-    void tinf_init();
-
-Initialise the global uninitialised data used by the decompression code.
-This function must be called once before any calls to the decompression
-functions.
-
-    int tinf_uncompress(void *dest,
-                        unsigned int *destLen,
-                        const void *source,
-                        unsigned int sourceLen);
-
-Decompress data in deflate compressed format from `source[]` to `dest[]`.
-`destLen` is set to the length of the decompressed data. Returns `TINF_OK`
-on success, and `TINF_DATA_ERROR` on error.
-
-    int tinf_gzip_uncompress(void *dest,
-                             unsigned int *destLen,
-                             const void *source,
-                             unsigned int sourceLen);
-
-Decompress data in gzip compressed format from `source[]` to `dest[]`.
-`destLen` is set to the length of the decompressed data. Returns `TINF_OK`
-on success, and `TINF_DATA_ERROR` on error.
-
-    int tinf_zlib_uncompress(void *dest,
-                             unsigned int *destLen,
-                             const void *source,
-                             unsigned int sourceLen);
-
-Decompress data in zlib compressed format from `source[]` to `dest[]`.
-`destLen` is set to the length of the decompressed data. Returns `TINF_OK`
-on success, and `TINF_DATA_ERROR` on error.
-
-    unsigned int tinf_adler32(const void *data,
-                              unsigned int length);
-
-Computes the Adler-32 checksum of `length` bytes starting at `data`. Used by
-`tinf_zlib_uncompress()`.
-
-    unsigned int tinf_crc32(const void *data,
-                            unsigned int length);
-
-Computes the CRC32 checksum of `length` bytes starting at `data`. Used by
-`tinf_gzip_uncompress()`.
-
-
-Source Code
------------
-
-The source code is ANSI C, and assumes that int is 32-bit. It has been
-tested on the x86 platform under Windows and Linux.
-
-The decompression functions should be endian-neutral, and also reentrant
-and thread-safe (not tested).
-
-
-Frequently Asked Questions
---------------------------
-
-Q: Is it really free? Can I use it in my commercial ExpenZip software?
-
-A: It's open-source software, available under the zlib license (see
-   later), which means you can use it for free -- even in commercial
-   products. If you do, please be kind enough to add an acknowledgement.
-
-Q: Did you just strip stuff from the zlib source to make it smaller?
-
-A: No, tinf was written from scratch, using the RFC documentation of
-   the formats it supports.
-
-Q: What do you mean by: 'the zlib library .. is more secure'?
-
-A: The zlib decompression code checks the compressed data for validity
-   while decompressing, so even on corrupted data it will not crash.
-   The tinf code assumes it is given valid compressed data.
-
-Q: I'm a Delphi programmer, can I use tinf?
-
-A: Sure, the object files produced by both Borland C and Watcom C should
-   be linkable with Delphi.
-
-Q: Will tinf work on UltraSTRANGE machines running WhackOS?
-
-A: I have no idea .. please try it out and let me know!
-
-Q: This is the first release, how can there be frequently asked questions?
-
-A: Ok, ok .. I made the questions up ;-)
+  - [puff](https://github.com/madler/zlib) (in the contrib folder of zlib)
+  - [tinfl](https://github.com/richgel999/miniz) (part of miniz)
+  - [uzlib](https://github.com/pfalcon/uzlib)
+  - [gdunzip](https://github.com/jellehermsen/gdunzip) (GDScript)
+  - [tiny-inflate](https://github.com/foliojs/tiny-inflate) (JavaScript)
+  - [tinflate](http://achurch.org/tinflate.c) (unrelated to this project)
+  - The [Wikipedia page for deflate](https://en.wikipedia.org/wiki/DEFLATE)
+    has a list of implementations
 
 
 License
