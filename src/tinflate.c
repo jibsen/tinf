@@ -39,6 +39,7 @@
 struct tinf_tree {
 	unsigned short table[16]; /* table of code length counts */
 	unsigned short trans[288]; /* code -> symbol translation table */
+	int max_sym;
 };
 
 struct tinf_data {
@@ -93,6 +94,8 @@ static void tinf_build_fixed_trees(struct tinf_tree *lt, struct tinf_tree *dt)
 		lt->trans[24 + 144 + 8 + i] = 144 + i;
 	}
 
+	lt->max_sym = 285;
+
 	/* build fixed distance tree */
 	for (i = 0; i < 16; ++i) {
 		dt->table[i] = 0;
@@ -103,6 +106,8 @@ static void tinf_build_fixed_trees(struct tinf_tree *lt, struct tinf_tree *dt)
 	for (i = 0; i < 32; ++i) {
 		dt->trans[i] = i;
 	}
+
+	dt->max_sym = 29;
 }
 
 /* given an array of code lengths, build a tree */
@@ -119,8 +124,13 @@ static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
 		t->table[i] = 0;
 	}
 
+	t->max_sym = -1;
+
 	/* scan symbol lengths, and sum code length counts */
 	for (i = 0; i < num; ++i) {
+		if (lengths[i]) {
+			t->max_sym = i;
+		}
 		t->table[lengths[i]]++;
 	}
 
@@ -271,9 +281,18 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 		return res;
 	}
 
+	/* check code length tree is not empty */
+	if (lt->max_sym == -1) {
+		return TINF_DATA_ERROR;
+	}
+
 	/* decode code lengths for the dynamic trees */
 	for (num = 0; num < hlit + hdist; ) {
 		int sym = tinf_decode_symbol(d, lt);
+
+		if (sym > lt->max_sym) {
+			return TINF_DATA_ERROR;
+		}
 
 		switch (sym) {
 		case 16:
@@ -388,6 +407,11 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 			int length, dist, offs;
 			int i;
 
+			/* check sym is within range and distance tree is not empty */
+			if (sym > lt->max_sym || sym - 257 > 28 || dt->max_sym == -1) {
+				return TINF_DATA_ERROR;
+			}
+
 			sym -= 257;
 
 			/* possibly get more bits from length code */
@@ -395,6 +419,11 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 			                        length_base[sym]);
 
 			dist = tinf_decode_symbol(d, dt);
+
+			/* check dist is within range */
+			if (dist > dt->max_sym || dist > 29) {
+				return TINF_DATA_ERROR;
+			}
 
 			/* possibly get more bits from distance code */
 			offs = tinf_getbits_base(d, dist_bits[dist],
