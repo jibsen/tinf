@@ -115,7 +115,7 @@ static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
                            unsigned int num)
 {
 	unsigned short offs[16];
-	unsigned int i, sum;
+	unsigned int i, sum, max;
 
 	assert(num < 288);
 
@@ -137,9 +137,20 @@ static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
 	t->table[0] = 0;
 
 	/* compute offset table for distribution sort */
-	for (sum = 0, i = 0; i < 16; ++i) {
+	for (max = 1, sum = 0, i = 0; i < 16; ++i) {
+		/* check no code length contains more codes than possible */
+		if (t->table[i] > max) {
+			return TINF_DATA_ERROR;
+		}
+		max = 2 * (max - t->table[i]);
+
 		offs[i] = sum;
 		sum += t->table[i];
+	}
+
+	/* check all codes were used, except for special case of one code */
+	if ((sum > 1 && max > 0) || (sum == 1 && t->table[1] != 1)) {
+		return TINF_DATA_ERROR;
 	}
 
 	/* create code->symbol translation table (symbols sorted by code) */
@@ -147,6 +158,14 @@ static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
 		if (lengths[i]) {
 			t->trans[offs[lengths[i]]++] = i;
 		}
+	}
+
+	/* for the special case of only one code which will have code 0, add
+	 * a code 1 which results in a symbol that is too large
+	 */
+	if (sum == 1) {
+		t->table[1] = 2;
+		t->trans[1] = t->max_sym + 1;
 	}
 
 	return TINF_OK;
@@ -416,7 +435,7 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 
 			/* possibly get more bits from length code */
 			length = tinf_getbits_base(d, length_bits[sym],
-			                        length_base[sym]);
+			                           length_base[sym]);
 
 			dist = tinf_decode_symbol(d, dt);
 
@@ -427,7 +446,7 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 
 			/* possibly get more bits from distance code */
 			offs = tinf_getbits_base(d, dist_bits[dist],
-			                      dist_base[dist]);
+			                         dist_base[dist]);
 
 			if (offs > d->destLen) {
 				return TINF_DATA_ERROR;
