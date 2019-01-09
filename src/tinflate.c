@@ -309,6 +309,11 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 		}
 	}
 
+	/* check EOB symbol is present */
+	if (lengths[256] == 0) {
+		return TINF_DATA_ERROR;
+	}
+
 	/* build dynamic trees */
 	res = tinf_build_tree(lt, lengths, hlit);
 
