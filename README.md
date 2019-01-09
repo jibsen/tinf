@@ -22,7 +22,7 @@ extracting archive, and the zlib library added 15k to my program. The tinf
 code added only 2k.
 
 Naturally the size difference is insignificant in most cases. Also, the
-zlib library has many more features, is more secure, and mostly faster.
+zlib library has many more features, is well-tested, and mostly faster.
 But if you have a project that calls for a small and simple deflate
 decompressor, give it a try :-)
 
@@ -60,11 +60,6 @@ toolsets.
 Notes
 -----
 
-While the implementation should be fairly compliant, it does assume it is
-given valid compressed data, and that there is sufficient space for the
-decompressed data. This means it is **important** to only use tinf to
-decompress data from trusted sources.
-
 tinf requires int to be at least 32-bit.
 
 The inflate algorithm and data format are from 'DEFLATE Compressed Data
@@ -76,9 +71,14 @@ version 3.3' ([RFC 1950][zlib]).
 The gzip data format is from 'GZIP file format specification version 4.3'
 ([RFC 1952][gzip]).
 
+The original version of tinf assumed it was given valid compressed data, and
+that there was sufficient space for the decompressed data. If code size is
+of the utmost importance, and you are absolutely sure you can trust the
+compressed data, you may want to check out [tinf 1.1.0][tinf110] (last
+release without security checks).
+
 Ideas for future versions:
 
-  - More safety checks
   - Memory for the `tinf_data` object should be passed, to avoid using more
     than 1k of stack space
   - Wrappers for unpacking zip archives and png images
@@ -88,6 +88,7 @@ Ideas for future versions:
 [deflate]: http://www.rfc-editor.org/rfc/rfc1951.txt
 [zlib]: http://www.rfc-editor.org/rfc/rfc1950.txt
 [gzip]: http://www.rfc-editor.org/rfc/rfc1952.txt
+[tinf110]: https://github.com/jibsen/tinf/releases/tag/v1.1.0
 
 
 Related Projects
