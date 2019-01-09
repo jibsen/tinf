@@ -67,6 +67,9 @@ void TINFCC tinf_init();
  * The variable `destLen` points to must contain the size of `dest` on entry,
  * and will be set to the size of the decompressed data on success.
  *
+ * Reads at most `sourceLen` bytes from `source`.
+ * Writes at most `*destLen` bytes to `dest`.
+ *
  * @param dest pointer to where to place decompressed data
  * @param destLen pointer to variable containing size of `dest`
  * @param source pointer to compressed data
@@ -82,6 +85,9 @@ int TINFCC tinf_uncompress(void *dest, unsigned int *destLen,
  * The variable `destLen` points to must contain the size of `dest` on entry,
  * and will be set to the size of the decompressed data on success.
  *
+ * Reads at most `sourceLen` bytes from `source`.
+ * Writes at most `*destLen` bytes to `dest`.
+ *
  * @param dest pointer to where to place decompressed data
  * @param destLen pointer to variable containing size of `dest`
  * @param source pointer to compressed data
@@ -96,6 +102,9 @@ int TINFCC tinf_gzip_uncompress(void *dest, unsigned int *destLen,
  *
  * The variable `destLen` points to must contain the size of `dest` on entry,
  * and will be set to the size of the decompressed data on success.
+ *
+ * Reads at most `sourceLen` bytes from `source`.
+ * Writes at most `*destLen` bytes to `dest`.
  *
  * @param dest pointer to where to place decompressed data
  * @param destLen pointer to variable containing size of `dest`
