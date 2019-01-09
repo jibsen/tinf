@@ -49,15 +49,15 @@ extern "C" {
  * @see tinf_uncompress, tinf_gzip_uncompress, tinf_zlib_uncompress
  */
 typedef enum {
-	TINF_OK         = 0,
-	TINF_DATA_ERROR = -3,
-	TINF_BUF_ERROR  = -5
+	TINF_OK         = 0,  /**< Success */
+	TINF_DATA_ERROR = -3, /**< Input error */
+	TINF_BUF_ERROR  = -5  /**< Not enough room for output */
 } tinf_error_code;
 
 /**
  * Initialize global data used by tinf.
  *
- * Must be called once before using any of the decompression functions.
+ * @deprecated No longer required, may be removed in a future version.
  */
 void TINFCC tinf_init();
 
