@@ -285,24 +285,24 @@ TEST inflate_code_length_codes(void)
 }
 
 /* Test tinf_uncompress on compressed data with errors */
-TEST inflate_error_cases(void)
+TEST inflate_error_case(const void *closure)
 {
+	const struct packed_data *pd = (const struct packed_data *) closure;
 	int res;
-	size_t i;
 
-	for (i = 0; i < ARRAY_SIZE(inflate_errors); ++i) {
-		unsigned int size = inflate_errors[i].depacked_size;
-		res = tinf_uncompress(buffer, &size,
-		                      inflate_errors[i].data, inflate_errors[i].src_size);
+	unsigned int size = pd->depacked_size;
+	res = tinf_uncompress(buffer, &size, pd->data, pd->src_size);
 
-		ASSERT(res != TINF_OK);
-	}
+	ASSERT(res != TINF_OK);
 
 	PASS();
 }
 
 SUITE(tinflate)
 {
+	char suffix[32];
+	int i;
+
 	RUN_TEST(inflate_empty_no_literals);
 	RUN_TEST(inflate_huffman_only);
 	RUN_TEST(inflate_rle);
@@ -310,7 +310,11 @@ SUITE(tinflate)
 	RUN_TEST(inflate_max_matchlen_alt);
 	RUN_TEST(inflate_code_length_codes);
 
-	RUN_TEST(inflate_error_cases);
+	for (i = 0; i < ARRAY_SIZE(inflate_errors); ++i) {
+		sprintf(suffix, "%d", i);
+		greatest_set_test_suffix(suffix);
+		RUN_TEST1(inflate_error_case, &inflate_errors[i]);
+	}
 }
 
 /* tinfzlib */
