@@ -42,43 +42,42 @@ int tinf_zlib_uncompress(void *dest, unsigned int *destLen,
 	int res;
 	unsigned char cmf, flg;
 
-	/* check room for at least 2 byte header and 4 byte trailer */
+	/* -- Check header -- */
+
+	/* Check room for at least 2 byte header and 4 byte trailer */
 	if (sourceLen < 6) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* -- get header bytes -- */
-
+	/* Get header bytes */
 	cmf = src[0];
 	flg = src[1];
 
-	/* -- check format -- */
-
-	/* check checksum */
+	/* Check checksum */
 	if ((256 * cmf + flg) % 31) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* check method is deflate */
+	/* Check method is deflate */
 	if ((cmf & 0x0F) != 8) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* check window size is valid */
+	/* Check window size is valid */
 	if ((cmf >> 4) > 7) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* check there is no preset dictionary */
+	/* Check there is no preset dictionary */
 	if (flg & 0x20) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* -- get adler32 checksum -- */
+	/* -- Get Adler-32 checksum of original data -- */
 
 	a32 = read_be32(&src[sourceLen - 4]);
 
-	/* -- inflate -- */
+	/* -- Decompress data -- */
 
 	res = tinf_uncompress(dst, destLen, src + 2, sourceLen - 6);
 
@@ -86,7 +85,7 @@ int tinf_zlib_uncompress(void *dest, unsigned int *destLen,
 		return TINF_DATA_ERROR;
 	}
 
-	/* -- check adler32 checksum -- */
+	/* -- Check Adler-32 checksum -- */
 
 	if (a32 != tinf_adler32(dst, *destLen)) {
 		return TINF_DATA_ERROR;

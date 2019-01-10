@@ -57,37 +57,37 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 	int res;
 	unsigned char flg;
 
-	/* -- check header -- */
+	/* -- Check header -- */
 
-	/* check room for at least 10 byte header and 8 byte trailer */
+	/* Check room for at least 10 byte header and 8 byte trailer */
 	if (sourceLen < 18) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* check id bytes */
+	/* Check id bytes */
 	if (src[0] != 0x1F || src[1] != 0x8B) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* check method is deflate */
+	/* Check method is deflate */
 	if (src[2] != 8) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* get flag byte */
+	/* Get flag byte */
 	flg = src[3];
 
-	/* check that reserved bits are zero */
+	/* Check that reserved bits are zero */
 	if (flg & 0xE0) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* -- find start of compressed data -- */
+	/* -- Find start of compressed data -- */
 
-	/* skip base header of 10 bytes */
+	/* Skip base header of 10 bytes */
 	start = src + 10;
 
-	/* skip extra data if present */
+	/* Skip extra data if present */
 	if (flg & FEXTRA) {
 		unsigned int xlen = read_le16(start);
 
@@ -98,7 +98,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 		start += xlen + 2;
 	}
 
-	/* skip file name if present */
+	/* Skip file name if present */
 	if (flg & FNAME) {
 		do {
 			if (start - src >= sourceLen) {
@@ -107,7 +107,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 		} while (*start++);
 	}
 
-	/* skip file comment if present */
+	/* Skip file comment if present */
 	if (flg & FCOMMENT) {
 		do {
 			if (start - src >= sourceLen) {
@@ -116,7 +116,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 		} while (*start++);
 	}
 
-	/* check header crc if present */
+	/* Check header crc if present */
 	if (flg & FHCRC) {
 		unsigned int hcrc;
 
@@ -133,7 +133,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 		start += 2;
 	}
 
-	/* -- get decompressed length -- */
+	/* -- Get decompressed length -- */
 
 	dlen = read_le32(&src[sourceLen - 4]);
 
@@ -141,11 +141,11 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 		return TINF_BUF_ERROR;
 	}
 
-	/* -- get crc32 of decompressed data -- */
+	/* -- Get CRC32 checksum of original data -- */
 
 	crc32 = read_le32(&src[sourceLen - 8]);
 
-	/* -- decompress data -- */
+	/* -- Decompress data -- */
 
 	if ((src + sourceLen) - start < 8) {
 		return TINF_DATA_ERROR;
@@ -162,7 +162,7 @@ int tinf_gzip_uncompress(void *dest, unsigned int *destLen,
 		return TINF_DATA_ERROR;
 	}
 
-	/* -- check CRC32 checksum -- */
+	/* -- Check CRC32 checksum -- */
 
 	if (crc32 != tinf_crc32(dst, dlen)) {
 		return TINF_DATA_ERROR;

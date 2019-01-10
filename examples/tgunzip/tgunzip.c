@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
 	tinf_init();
 
-	/* -- open files -- */
+	/* -- Open files -- */
 
 	if ((fin = fopen(argv[1], "rb")) == NULL) {
 		exit_error("source file");
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 		exit_error("destination file");
 	}
 
-	/* -- read source -- */
+	/* -- Read source -- */
 
 	fseek(fin, 0, SEEK_END);
 
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
 	fclose(fin);
 
-	/* -- get decompressed length -- */
+	/* -- Get decompressed length -- */
 
 	dlen = read_le32(&source[len - 4]);
 
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 		exit_error("memory");
 	}
 
-	/* -- decompress data -- */
+	/* -- Decompress data -- */
 
 	outlen = dlen;
 
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 
 	printf("decompressed %u bytes\n", outlen);
 
-	/* -- write output -- */
+	/* -- Write output -- */
 
 	fwrite(dest, 1, outlen, fout);
 
