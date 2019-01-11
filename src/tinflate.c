@@ -113,7 +113,7 @@ static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
 	unsigned short offs[16];
 	unsigned int i, sum, max;
 
-	assert(num < 288);
+	assert(num <= 288);
 
 	/* Clear code length count table */
 	for (i = 0; i < 16; ++i) {
@@ -124,9 +124,12 @@ static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
 
 	/* Scan symbol lengths, and sum code length counts */
 	for (i = 0; i < num; ++i) {
+		assert(lengths[i] <= 15);
+
 		if (lengths[i]) {
 			t->max_sym = i;
 		}
+
 		t->table[lengths[i]]++;
 	}
 
