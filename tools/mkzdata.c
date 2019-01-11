@@ -282,6 +282,101 @@ write_no_lit(struct lsb_bitwriter *lbw)
 	lbw_putbits_rev(lbw, 0, 1); // 256 = EOB
 }
 
+// copy with max distance 32768
+void
+write_max_dist(struct lsb_bitwriter *lbw)
+{
+	// bfinal
+	lbw_putbits(lbw, 1, 1);
+
+	// btype
+	lbw_putbits(lbw, 2, 2);
+
+	// hlit
+	lbw_putbits(lbw, 286 - 257, 5);
+
+	// hdist
+	lbw_putbits(lbw, 30 - 1, 5);
+
+	// hclen
+	lbw_putbits(lbw, 14, 4);
+
+	lbw_putbits(lbw, 0, 3); // 16
+	lbw_putbits(lbw, 0, 3); // 17
+	lbw_putbits(lbw, 2, 3); // 18
+	lbw_putbits(lbw, 0, 3); // 0
+	lbw_putbits(lbw, 0, 3); // 8
+	lbw_putbits(lbw, 0, 3); // 7
+	lbw_putbits(lbw, 0, 3); // 9
+	lbw_putbits(lbw, 0, 3); // 6
+	lbw_putbits(lbw, 0, 3); // 10
+	lbw_putbits(lbw, 0, 3); // 5
+	lbw_putbits(lbw, 0, 3); // 11
+	lbw_putbits(lbw, 2, 3); // 4
+	lbw_putbits(lbw, 0, 3); // 12
+	lbw_putbits(lbw, 2, 3); // 3
+	lbw_putbits(lbw, 0, 3); // 13
+	lbw_putbits(lbw, 0, 3); // 2
+	lbw_putbits(lbw, 0, 3); // 14
+	lbw_putbits(lbw, 2, 3); // 1
+
+	// code lengths for literal/length
+	lbw_putbits_rev(lbw, 1, 2); // 0 has len 3
+	lbw_putbits_rev(lbw, 1, 2); // 1 has len 3
+	lbw_putbits_rev(lbw, 2, 2); // 2 has len 4
+
+	lbw_putbits_rev(lbw, 3, 2); // repeat len 0 for 138 times
+	lbw_putbits(lbw, 127, 7);
+
+	lbw_putbits_rev(lbw, 3, 2); // repeat len 0 for 115 times
+	lbw_putbits(lbw, 104, 7);
+
+	lbw_putbits_rev(lbw, 2, 2); // 256 has len 4
+	lbw_putbits_rev(lbw, 2, 2); // 257 has len 4
+
+	lbw_putbits_rev(lbw, 3, 2); // repeat len 0 for 26 times
+	lbw_putbits(lbw, 15, 7);
+
+	lbw_putbits_rev(lbw, 2, 2); // 284 has len 4
+
+	lbw_putbits_rev(lbw, 0, 2); // 285 has len 1
+
+	// code lengths for distance
+	lbw_putbits_rev(lbw, 0, 2); // 0 has len 1
+
+	lbw_putbits_rev(lbw, 3, 2); // repeat len 0 for 28 times
+	lbw_putbits(lbw, 17, 7);
+
+	lbw_putbits_rev(lbw, 0, 2); // 29 has len 1
+
+	// no compressed data
+	lbw_putbits_rev(lbw, 12, 4); // literal 02
+	lbw_putbits_rev(lbw, 5, 3); // literal 01
+	lbw_putbits_rev(lbw, 4, 3); // literal 00
+
+	lbw_putbits_rev(lbw, 15, 4); // 284 = copy len 257
+	lbw_putbits(lbw, 30, 5);
+
+	lbw_putbits_rev(lbw, 0, 1); // distance 1
+
+	for (int i = 0; i < 126; ++i) {
+		lbw_putbits_rev(lbw, 0, 1); // 285 = copy len 258
+
+		lbw_putbits_rev(lbw, 0, 1); // distance 1
+	}
+
+	lbw_putbits_rev(lbw, 14, 4); // 257 = copy len 3
+
+	lbw_putbits_rev(lbw, 1, 1); // distance 32768
+	lbw_putbits(lbw, 8191, 13);
+
+	// end of block
+	lbw_putbits_rev(lbw, 13, 4); // 256 = EOB
+
+}
+
+unsigned char buffer[64 * 1024];
+
 int
 main(int argc, char *argv[])
 {
@@ -298,7 +393,7 @@ main(int argc, char *argv[])
 
 	lbw_init(&lbw, &data[0]);
 
-	write_256_rle(&lbw);
+	write_max_dist(&lbw);
 
 	uint32_t size = lbw_finalize(&lbw) - &data[0];
 
@@ -321,11 +416,18 @@ main(int argc, char *argv[])
 
 		fwrite(data, 1, size, fout);
 
-		// Note: only works on little-endian
-		uint32_t crc = tinf_crc32(&org_data[0], 256);
-		fwrite(&crc, sizeof(crc), 1, fout);
+		unsigned int dsize = sizeof(buffer);
+		int res = tinf_uncompress(buffer, &dsize, data, size);
 
-		uint32_t org_size = 256;
+		if (res != TINF_OK) {
+			fputs("mkzdata: decompression error\n", stderr);
+			return EXIT_FAILURE;
+		}
+
+		// Note: only works on little-endian
+		uint32_t crc = tinf_crc32(&buffer[0], dsize);
+		fwrite(&crc, sizeof(crc), 1, fout);
+		uint32_t org_size = dsize;
 		fwrite(&org_size, sizeof(org_size), 1, fout);
 
 		fclose(fout);

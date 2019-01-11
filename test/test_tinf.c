@@ -309,6 +309,43 @@ TEST inflate_max_matchlen_alt(void)
 	PASS();
 }
 
+TEST inflate_max_matchdist(void)
+{
+	/* A match of length 3 with a distance of 32768 */
+	static const unsigned char data[] = {
+		0xED, 0xDD, 0x01, 0x01, 0x00, 0x00, 0x08, 0x02, 0x20, 0xED,
+		0xFF, 0xE8, 0xFA, 0x11, 0x1C, 0x61, 0x9A, 0xF7, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE0,
+		0xFE, 0xFF, 0x05
+	};
+	unsigned char out[32771];
+	unsigned int dlen = ARRAY_SIZE(out);
+	int res;
+	int i;
+
+	memset(out, 0xFF, ARRAY_SIZE(out));
+
+	res = tinf_uncompress(out, &dlen, data, ARRAY_SIZE(data));
+
+	ASSERT(res == TINF_OK && dlen == ARRAY_SIZE(out));
+
+	ASSERT(out[0] == 2 && out[1] == 1 && out[2] == 0);
+
+	for (i = 3; i < ARRAY_SIZE(out) - 3; ++i) {
+		if (out[i]) {
+			FAIL();
+		}
+	}
+
+	ASSERT(out[ARRAY_SIZE(out) - 3] == 2);
+	ASSERT(out[ARRAY_SIZE(out) - 2] == 1);
+	ASSERT(out[ARRAY_SIZE(out) - 1] == 0);
+
+	PASS();
+}
+
 TEST inflate_code_length_codes(void)
 {
 	/* 4 zero bytes compressed, code length codes include codes 16, 17, and 18 */
@@ -360,6 +397,7 @@ SUITE(tinflate)
 	RUN_TEST(inflate_rle);
 	RUN_TEST(inflate_max_matchlen);
 	RUN_TEST(inflate_max_matchlen_alt);
+	RUN_TEST(inflate_max_matchdist);
 	RUN_TEST(inflate_code_length_codes);
 
 	for (i = 0; i < ARRAY_SIZE(inflate_errors); ++i) {
