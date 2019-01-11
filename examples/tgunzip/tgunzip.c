@@ -49,10 +49,10 @@ int main(int argc, char *argv[])
 	unsigned char *source, *dest;
 	int res;
 
-	printf("tgunzip - example from the tiny inflate library (www.ibsensoftware.com)\n\n");
+	printf("tgunzip " TINF_VER_STRING " - example from the tiny inflate library (www.ibsensoftware.com)\n\n");
 
-	if (argc < 3) {
-		printf("Syntax: tgunzip <source> <destination>\n\n"
+	if (argc != 3) {
+		printf("usage: tgunzip INFILE OUTFILE\n\n"
 		       "Both input and output are kept in memory, so do not use this on huge files.\n");
 		return 1;
 	}
