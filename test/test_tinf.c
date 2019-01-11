@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "greatest.h"
 
@@ -373,6 +374,31 @@ TEST inflate_code_length_codes(void)
 	PASS();
 }
 
+/* Test tinf_uncompress on random data */
+TEST inflate_random(void)
+{
+	unsigned char data[256];
+	unsigned int len;
+
+	for (len = 1; len < ARRAY_SIZE(data); ++len) {
+		unsigned int dlen = ARRAY_SIZE(buffer);
+		int i;
+
+		for (i = 0; i < len; ++i) {
+			data[i] = (unsigned char) rand();
+		}
+
+		/* Make sure btype is valid */
+		if ((data[0] & 0x06) == 0x06) {
+			data[0] &= (rand() > RAND_MAX / 2) ? ~0x02 : ~0x04;
+		}
+
+		tinf_uncompress(buffer, &dlen, data, len);
+	}
+
+	PASS();
+}
+
 /* Test tinf_uncompress on compressed data with errors */
 TEST inflate_error_case(const void *closure)
 {
@@ -399,6 +425,8 @@ SUITE(tinflate)
 	RUN_TEST(inflate_max_matchlen_alt);
 	RUN_TEST(inflate_max_matchdist);
 	RUN_TEST(inflate_code_length_codes);
+
+	RUN_TEST(inflate_random);
 
 	for (i = 0; i < ARRAY_SIZE(inflate_errors); ++i) {
 		sprintf(suffix, "%d", i);
@@ -806,6 +834,8 @@ GREATEST_MAIN_DEFS();
 int main(int argc, char *argv[])
 {
 	GREATEST_MAIN_BEGIN();
+
+	srand(time(NULL));
 
 	tinf_init();
 
