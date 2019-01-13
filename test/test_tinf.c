@@ -169,6 +169,22 @@ static const struct packed_data gzip_errors[] = {
 
 /* tinflate */
 
+TEST inflate_padding(void)
+{
+	/* Empty buffer, static, 6 bits of padding in the second byte set to 1 */
+	static const unsigned char data[] = {
+		0x03, 0xFC
+	};
+	unsigned int dlen = 0;
+	int res;
+
+	res = tinf_uncompress((void *) robuffer, &dlen, data, ARRAY_SIZE(data));
+
+	ASSERT(res == TINF_OK && dlen == 0);
+
+	PASS();
+}
+
 TEST inflate_empty_no_literals(void)
 {
 	/* Empty buffer, dynamic with 256 as only literal/length code
@@ -418,6 +434,7 @@ SUITE(tinflate)
 	char suffix[32];
 	int i;
 
+	RUN_TEST(inflate_padding);
 	RUN_TEST(inflate_empty_no_literals);
 	RUN_TEST(inflate_huffman_only);
 	RUN_TEST(inflate_rle);
