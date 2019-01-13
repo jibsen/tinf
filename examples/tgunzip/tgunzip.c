@@ -77,6 +77,10 @@ int main(int argc, char *argv[])
 
 	fseek(fin, 0, SEEK_SET);
 
+	if (len < 18) {
+		exit_error("input too small");
+	}
+
 	source = (unsigned char *) malloc(len);
 
 	if (source == NULL) {
