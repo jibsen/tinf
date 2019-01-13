@@ -23,6 +23,7 @@
  *      distribution.
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -36,25 +37,35 @@ static unsigned int read_le32(const unsigned char *p)
 	     | ((unsigned int) p[3] << 24);
 }
 
-static void exit_error(const char *what)
+static void printf_error(const char *fmt, ...)
 {
-	fprintf(stderr, "tgunzip: %s\n", what);
-	exit(1);
+	va_list arg;
+
+	fputs("tgunzip: ", stderr);
+
+	va_start(arg, fmt);
+	vfprintf(stderr, fmt, arg);
+	va_end(arg);
+
+	fputs("\n", stderr);
 }
 
 int main(int argc, char *argv[])
 {
-	FILE *fin, *fout;
+	FILE *fin = NULL;
+	FILE *fout = NULL;
+	unsigned char *source = NULL;
+	unsigned char *dest = NULL;
 	unsigned int len, dlen, outlen;
-	unsigned char *source, *dest;
+	int retval = EXIT_FAILURE;
 	int res;
 
 	printf("tgunzip " TINF_VER_STRING " - example from the tiny inflate library (www.ibsensoftware.com)\n\n");
 
 	if (argc != 3) {
-		printf("usage: tgunzip INFILE OUTFILE\n\n"
-		       "Both input and output are kept in memory, so do not use this on huge files.\n");
-		return 1;
+		fputs("usage: tgunzip INFILE OUTFILE\n\n"
+		      "Both input and output are kept in memory, so do not use this on huge files.\n", stderr);
+		return EXIT_FAILURE;
 	}
 
 	tinf_init();
@@ -62,11 +73,13 @@ int main(int argc, char *argv[])
 	/* -- Open files -- */
 
 	if ((fin = fopen(argv[1], "rb")) == NULL) {
-		exit_error("source file");
+		printf_error("unable to open input file '%s'", argv[1]);
+		goto out;
 	}
 
 	if ((fout = fopen(argv[2], "wb")) == NULL) {
-		exit_error("destination file");
+		printf_error("unable to create output file '%s'", argv[2]);
+		goto out;
 	}
 
 	/* -- Read source -- */
@@ -78,29 +91,31 @@ int main(int argc, char *argv[])
 	fseek(fin, 0, SEEK_SET);
 
 	if (len < 18) {
-		exit_error("input too small");
+		printf_error("input too small to be gzip");
+		goto out;
 	}
 
 	source = (unsigned char *) malloc(len);
 
 	if (source == NULL) {
-		exit_error("memory");
+		printf_error("not enough memory");
+		goto out;
 	}
 
 	if (fread(source, 1, len, fin) != len) {
-		exit_error("read");
+		printf_error("error reading input file");
+		goto out;
 	}
-
-	fclose(fin);
 
 	/* -- Get decompressed length -- */
 
 	dlen = read_le32(&source[len - 4]);
 
-	dest = (unsigned char *) malloc(dlen);
+	dest = (unsigned char *) malloc(dlen ? dlen : 1);
 
 	if (dest == NULL) {
-		exit_error("memory");
+		printf_error("not enough memory");
+		goto out;
 	}
 
 	/* -- Decompress data -- */
@@ -110,7 +125,8 @@ int main(int argc, char *argv[])
 	res = tinf_gzip_uncompress(dest, &outlen, source, len);
 
 	if ((res != TINF_OK) || (outlen != dlen)) {
-		exit_error("inflate");
+		printf_error("decompression failed");
+		goto out;
 	}
 
 	printf("decompressed %u bytes\n", outlen);
@@ -119,7 +135,24 @@ int main(int argc, char *argv[])
 
 	fwrite(dest, 1, outlen, fout);
 
-	fclose(fout);
+	retval = EXIT_SUCCESS;
 
-	return 0;
+out:
+	if (fin != NULL) {
+		fclose(fin);
+	}
+
+	if (fout != NULL) {
+		fclose(fout);
+	}
+
+	if (source != NULL) {
+		free(source);
+	}
+
+	if (dest != NULL) {
+		free(dest);
+	}
+
+	return retval;
 }
