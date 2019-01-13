@@ -59,7 +59,7 @@ typedef enum {
  *
  * @deprecated No longer required, may be removed in a future version.
  */
-void TINFCC tinf_init();
+void TINFCC tinf_init(void);
 
 /**
  * Decompress `sourceLen` bytes of deflate data from `source` to `dest`.

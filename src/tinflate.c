@@ -534,7 +534,7 @@ static int tinf_inflate_dynamic_block(struct tinf_data *d)
 /* -- Public functions -- */
 
 /* Initialize global (static) data */
-void tinf_init()
+void tinf_init(void)
 {
 	return;
 }
