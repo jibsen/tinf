@@ -553,8 +553,6 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 	d.dest_start = d.dest;
 	d.dest_end = d.dest + *destLen;
 
-	*destLen = 0;
-
 	do {
 		unsigned int btype;
 		int res;
