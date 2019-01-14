@@ -47,9 +47,9 @@ struct tinf_data {
 	int bitcount;
 	int overflow;
 
+	unsigned char *destStart;
 	unsigned char *dest;
 	unsigned char *destEnd;
-	unsigned int destLen;
 
 	struct tinf_tree ltree; /* Literal/length tree */
 	struct tinf_tree dtree; /* Distance tree */
@@ -415,7 +415,6 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 				return TINF_BUF_ERROR;
 			}
 			*d->dest++ = sym;
-			d->destLen++;
 		}
 		else {
 			int length, dist, offs;
@@ -443,7 +442,7 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 			offs = tinf_getbits_base(d, dist_bits[dist],
 			                         dist_base[dist]);
 
-			if (offs > d->destLen) {
+			if (offs > d->dest - d->destStart) {
 				return TINF_DATA_ERROR;
 			}
 
@@ -457,7 +456,6 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 			}
 
 			d->dest += length;
-			d->destLen += length;
 		}
 	}
 }
@@ -501,8 +499,6 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	/* Make sure we start next block on a byte boundary */
 	d->tag = 0;
 	d->bitcount = 0;
-
-	d->destLen += length;
 
 	return TINF_OK;
 }
@@ -554,8 +550,8 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 	d.overflow = 0;
 
 	d.dest = (unsigned char *) dest;
+	d.destStart = d.dest;
 	d.destEnd = d.dest + *destLen;
-	d.destLen = 0;
 
 	*destLen = 0;
 
@@ -598,7 +594,7 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 		return TINF_DATA_ERROR;
 	}
 
-	*destLen = d.destLen;
+	*destLen = d.dest - d.destStart;
 
 	return TINF_OK;
 }
