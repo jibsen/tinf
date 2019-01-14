@@ -269,7 +269,7 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 	/* The RFC limits the range of HLIT to 286, but lists HDIST as range
 	 * 1-32, even though distance codes 30 and 31 have no meaning. While
 	 * we could allow the full range of HLIT and HDIST to make it possible
-	 * to decode the static trees with this function, we consider it an
+	 * to decode the fixed trees with this function, we consider it an
 	 * error here.
 	 *
 	 * See also: https://github.com/madler/zlib/issues/82
@@ -503,17 +503,17 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	return TINF_OK;
 }
 
-/* Inflate a block of data compressed with fixed huffman trees */
+/* Inflate a block of data compressed with fixed Huffman trees */
 static int tinf_inflate_fixed_block(struct tinf_data *d)
 {
-	/* Build fixed huffman trees */
+	/* Build fixed Huffman trees */
 	tinf_build_fixed_trees(&d->ltree, &d->dtree);
 
 	/* Decode block using fixed trees */
 	return tinf_inflate_block_data(d, &d->ltree, &d->dtree);
 }
 
-/* Inflate a block of data compressed with dynamic huffman trees */
+/* Inflate a block of data compressed with dynamic Huffman trees */
 static int tinf_inflate_dynamic_block(struct tinf_data *d)
 {
 	/* Decode trees from stream */
@@ -570,11 +570,11 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 			res = tinf_inflate_uncompressed_block(&d);
 			break;
 		case 1:
-			/* Decompress block with fixed huffman trees */
+			/* Decompress block with fixed Huffman trees */
 			res = tinf_inflate_fixed_block(&d);
 			break;
 		case 2:
-			/* Decompress block with dynamic huffman trees */
+			/* Decompress block with dynamic Huffman trees */
 			res = tinf_inflate_dynamic_block(&d);
 			break;
 		default:

@@ -62,17 +62,17 @@ static const struct packed_data inflate_errors[] = {
 	/* Uncompressed block writing one past end */
 	{ 7, 1, { 0x01, 0x02, 0x00, 0xFD, 0xFF, 0x42, 0x42 } },
 
-	/* Static incomplete */
+	/* Fixed incomplete */
 	{ 2, 1, { 0x63, 0x00 } },
-	/* Static reading one byte before start */
+	/* Fixed reading one byte before start */
 	{ 4, 4, { 0x63, 0x00, 0x42, 0x00 } },
-	/* Static literal writing one byte past end */
+	/* Fixed literal writing one byte past end */
 	{ 4, 1, { 0x63, 0x60, 0x00, 0x00 } },
-	/* Static match writing one byte past end */
+	/* Fixed match writing one byte past end */
 	{ 4, 3, { 0x63, 0x00, 0x02, 0x00 } },
-	/* Static len > 285 */
+	/* Fixed len > 285 */
 	{ 4, 1024, { 0x63, 0x18, 0x03, 0x00 } },
-	/* Static dist > 29 */
+	/* Fixed dist > 29 */
 	{ 4, 4, { 0x63, 0x00, 0x3E, 0x00 } },
 
 	/* Dynamic incomplete no HDIST */
@@ -175,7 +175,7 @@ static const struct packed_data gzip_errors[] = {
 
 TEST inflate_padding(void)
 {
-	/* Empty buffer, static, 6 bits of padding in the second byte set to 1 */
+	/* Empty buffer, fixed, 6 bits of padding in the second byte set to 1 */
 	static const unsigned char data[] = {
 		0x03, 0xFC
 	};
@@ -475,9 +475,9 @@ TEST zlib_empty_raw(void)
 	PASS();
 }
 
-TEST zlib_empty_static(void)
+TEST zlib_empty_fixed(void)
 {
-	/* Empty buffer, static huffman */
+	/* Empty buffer, fixed Huffman */
 	static const unsigned char data[] = {
 		0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01
 	};
@@ -493,7 +493,7 @@ TEST zlib_empty_static(void)
 
 TEST zlib_empty_dynamic(void)
 {
-	/* Empty buffer, dynamic huffman */
+	/* Empty buffer, dynamic Huffman */
 	static const unsigned char data[] = {
 		0x78, 0x9C, 0x05, 0xC1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x10, 0xFF, 0xD5, 0x08, 0x00, 0x00, 0x00, 0x01
@@ -526,9 +526,9 @@ TEST zlib_onebyte_raw(void)
 	PASS();
 }
 
-TEST zlib_onebyte_static(void)
+TEST zlib_onebyte_fixed(void)
 {
-	/* One byte 00, static huffman */
+	/* One byte 00, fixed Huffman */
 	static const unsigned char data[] = {
 		0x78, 0x9C, 0x63, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01
 	};
@@ -545,7 +545,7 @@ TEST zlib_onebyte_static(void)
 
 TEST zlib_onebyte_dynamic(void)
 {
-	/* One byte 00, dynamic huffman */
+	/* One byte 00, dynamic Huffman */
 	static const unsigned char data[] = {
 		0x78, 0x9C, 0x05, 0xC1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x10, 0xFF, 0xD5, 0x10, 0x00, 0x01, 0x00, 0x01
@@ -608,11 +608,11 @@ SUITE(tinfzlib)
 	int i;
 
 	RUN_TEST(zlib_empty_raw);
-	RUN_TEST(zlib_empty_static);
+	RUN_TEST(zlib_empty_fixed);
 	RUN_TEST(zlib_empty_dynamic);
 
 	RUN_TEST(zlib_onebyte_raw);
-	RUN_TEST(zlib_onebyte_static);
+	RUN_TEST(zlib_onebyte_fixed);
 	RUN_TEST(zlib_onebyte_dynamic);
 	RUN_TEST(zlib_zeroes);
 
@@ -643,9 +643,9 @@ TEST gzip_empty_raw(void)
 	PASS();
 }
 
-TEST gzip_empty_static(void)
+TEST gzip_empty_fixed(void)
 {
-	/* Empty buffer, static huffman */
+	/* Empty buffer, fixed Huffman */
 	static const unsigned char data[] = {
 		0x1F, 0x8B, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0B,
 		0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -662,7 +662,7 @@ TEST gzip_empty_static(void)
 
 TEST gzip_empty_dynamic(void)
 {
-	/* Empty buffer, dynamic huffman */
+	/* Empty buffer, dynamic Huffman */
 	static const unsigned char data[] = {
 		0x1F, 0x8B, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0B,
 		0x05, 0xC1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xFF,
@@ -697,9 +697,9 @@ TEST gzip_onebyte_raw(void)
 	PASS();
 }
 
-TEST gzip_onebyte_static(void)
+TEST gzip_onebyte_fixed(void)
 {
-	/* One byte 00, static huffman */
+	/* One byte 00, fixed Huffman */
 	static const unsigned char data[] = {
 		0x1F, 0x8B, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0B,
 		0x63, 0x00, 0x00, 0x8D, 0xEF, 0x02, 0xD2, 0x01, 0x00, 0x00,
@@ -718,7 +718,7 @@ TEST gzip_onebyte_static(void)
 
 TEST gzip_onebyte_dynamic(void)
 {
-	/* One byte 00, dynamic huffman */
+	/* One byte 00, dynamic Huffman */
 	static const unsigned char data[] = {
 		0x1F, 0x8B, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0B,
 		0x05, 0xC1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xFF,
@@ -831,11 +831,11 @@ SUITE(tinfgzip)
 	int i;
 
 	RUN_TEST(gzip_empty_raw);
-	RUN_TEST(gzip_empty_static);
+	RUN_TEST(gzip_empty_fixed);
 	RUN_TEST(gzip_empty_dynamic);
 
 	RUN_TEST(gzip_onebyte_raw);
-	RUN_TEST(gzip_onebyte_static);
+	RUN_TEST(gzip_onebyte_fixed);
 	RUN_TEST(gzip_onebyte_dynamic);
 
 	RUN_TEST(gzip_fhcrc);

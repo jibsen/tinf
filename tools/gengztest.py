@@ -68,11 +68,11 @@ def write_gzip(f, args):
         if args.method == 'raw':
             # empty buffer, uncompressed
             data.extend(bytes.fromhex('01 00 00 ff ff'))
-        elif args.method == 'static':
-            # empty buffer, static huffman
+        elif args.method == 'fixed':
+            # empty buffer, fixed Huffman
             data.extend(bytes.fromhex('03 00'))
         elif args.method == 'dynamic':
-            # empty buffer, dynamic huffman
+            # empty buffer, dynamic Huffman
             data.extend(bytes.fromhex('05 c1 81 00 00 00 00 00 10 ff d5 08'))
         # CRC32 of empty buffer
         data.extend(struct.pack('<I', 0))
@@ -82,11 +82,11 @@ def write_gzip(f, args):
         if args.method == 'raw':
             # one byte 00, uncompressed
             data.extend(bytes.fromhex('01 01 00 fe ff 00'))
-        elif args.method == 'static':
-            # one byte 00, static huffman
+        elif args.method == 'fixed':
+            # one byte 00, fixed Huffman
             data.extend(bytes.fromhex('63 00 00'))
         elif args.method == 'dynamic':
-            # one byte 00, dynamic huffman
+            # one byte 00, dynamic Huffman
             data.extend(bytes.fromhex('05 c1 81 00 00 00 00 00 10 ff d5 10'))
         # CRC32 of one byte 00
         data.extend(struct.pack('<I', zlib.crc32(b'\x00')))
@@ -108,7 +108,7 @@ if __name__ == '__main__':
                         choices=['empty', 'byte00'], default='empty',
                         help='compressed data')
     parser.add_argument('-m', '--method', type=str,
-                        choices=['raw', 'static', 'dynamic'], default='static',
+                        choices=['raw', 'fixed', 'dynamic'], default='fixed',
                         help='compression method')
     parser.add_argument('-s', action='store_true', help='add header CRC16')
     parser.add_argument('-i', action='store_true', help='generate include file')
