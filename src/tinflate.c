@@ -42,14 +42,14 @@ struct tinf_tree {
 
 struct tinf_data {
 	const unsigned char *source;
-	const unsigned char *sourceEnd;
+	const unsigned char *source_end;
 	unsigned int tag;
 	int bitcount;
 	int overflow;
 
-	unsigned char *destStart;
+	unsigned char *dest_start;
 	unsigned char *dest;
-	unsigned char *destEnd;
+	unsigned char *dest_end;
 
 	struct tinf_tree ltree; /* Literal/length tree */
 	struct tinf_tree dtree; /* Distance tree */
@@ -178,7 +178,7 @@ static void tinf_refill(struct tinf_data *d, int num)
 
 	/* Read bytes until at least num bits available */
 	while (d->bitcount < num) {
-		if (d->source != d->sourceEnd) {
+		if (d->source != d->source_end) {
 			d->tag |= (unsigned int) *d->source++ << d->bitcount;
 		}
 		else {
@@ -411,7 +411,7 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 		}
 
 		if (sym < 256) {
-			if (d->dest == d->destEnd) {
+			if (d->dest == d->dest_end) {
 				return TINF_BUF_ERROR;
 			}
 			*d->dest++ = sym;
@@ -442,11 +442,11 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 			offs = tinf_getbits_base(d, dist_bits[dist],
 			                         dist_base[dist]);
 
-			if (offs > d->dest - d->destStart) {
+			if (offs > d->dest - d->dest_start) {
 				return TINF_DATA_ERROR;
 			}
 
-			if (d->destEnd - d->dest < length) {
+			if (d->dest_end - d->dest < length) {
 				return TINF_BUF_ERROR;
 			}
 
@@ -466,7 +466,7 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	unsigned int length, invlength;
 	unsigned int i;
 
-	if (d->sourceEnd - d->source < 4) {
+	if (d->source_end - d->source < 4) {
 		return TINF_DATA_ERROR;
 	}
 
@@ -483,11 +483,11 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 
 	d->source += 4;
 
-	if (d->sourceEnd - d->source < length) {
+	if (d->source_end - d->source < length) {
 		return TINF_DATA_ERROR;
 	}
 
-	if (d->destEnd - d->dest < length) {
+	if (d->dest_end - d->dest < length) {
 		return TINF_BUF_ERROR;
 	}
 
@@ -544,14 +544,14 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 
 	/* Initialise data */
 	d.source = (const unsigned char *) source;
-	d.sourceEnd = d.source + sourceLen;
+	d.source_end = d.source + sourceLen;
 	d.tag = 0;
 	d.bitcount = 0;
 	d.overflow = 0;
 
 	d.dest = (unsigned char *) dest;
-	d.destStart = d.dest;
-	d.destEnd = d.dest + *destLen;
+	d.dest_start = d.dest;
+	d.dest_end = d.dest + *destLen;
 
 	*destLen = 0;
 
@@ -594,7 +594,7 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 		return TINF_DATA_ERROR;
 	}
 
-	*destLen = d.dest - d.destStart;
+	*destLen = d.dest - d.dest_start;
 
 	return TINF_OK;
 }
