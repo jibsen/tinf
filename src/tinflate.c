@@ -464,7 +464,6 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 {
 	unsigned int length, invlength;
-	unsigned int i;
 
 	if (d->source_end - d->source < 4) {
 		return TINF_DATA_ERROR;
@@ -492,7 +491,7 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	}
 
 	/* Copy block */
-	for (i = length; i; --i) {
+	while (length--) {
 		*d->dest++ = *d->source++;
 	}
 
