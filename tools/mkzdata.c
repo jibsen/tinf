@@ -372,7 +372,95 @@ write_max_dist(struct lsb_bitwriter *lbw)
 
 	// end of block
 	lbw_putbits_rev(lbw, 13, 4); // 256 = EOB
+}
 
+// Use length 15 codeword
+void
+write_max_codelen(struct lsb_bitwriter *lbw)
+{
+	// bfinal
+	lbw_putbits(lbw, 1, 1);
+
+	// btype
+	lbw_putbits(lbw, 2, 2);
+
+	// hlit
+	lbw_putbits(lbw, 0, 5);
+
+	// hdist
+	lbw_putbits(lbw, 10, 5);
+
+	// hclen
+	lbw_putbits(lbw, 15, 4);
+
+	lbw_putbits(lbw, 0, 3); // 16
+	lbw_putbits(lbw, 0, 3); // 17
+	lbw_putbits(lbw, 4, 3); // 18
+	lbw_putbits(lbw, 0, 3); // 0
+	lbw_putbits(lbw, 4, 3); // 8
+	lbw_putbits(lbw, 4, 3); // 7
+	lbw_putbits(lbw, 4, 3); // 9
+	lbw_putbits(lbw, 4, 3); // 6
+	lbw_putbits(lbw, 4, 3); // 10
+	lbw_putbits(lbw, 4, 3); // 5
+	lbw_putbits(lbw, 4, 3); // 11
+	lbw_putbits(lbw, 4, 3); // 4
+	lbw_putbits(lbw, 4, 3); // 12
+	lbw_putbits(lbw, 4, 3); // 3
+	lbw_putbits(lbw, 4, 3); // 13
+	lbw_putbits(lbw, 4, 3); // 2
+	lbw_putbits(lbw, 4, 3); // 14
+	lbw_putbits(lbw, 4, 3); // 1
+	lbw_putbits(lbw, 4, 3); // 15
+
+	// code lengths for literal/length
+	lbw_putbits_rev(lbw, 0, 4); // 0 has len 1
+	lbw_putbits_rev(lbw, 1, 4); // 1 has len 2
+	lbw_putbits_rev(lbw, 2, 4); // 2 has len 3
+	lbw_putbits_rev(lbw, 3, 4); // 3 has len 4
+	lbw_putbits_rev(lbw, 4, 4); // 4 has len 5
+	lbw_putbits_rev(lbw, 5, 4); // 5 has len 6
+	lbw_putbits_rev(lbw, 6, 4); // 6 has len 7
+	lbw_putbits_rev(lbw, 7, 4); // 7 has len 8
+	lbw_putbits_rev(lbw, 8, 4); // 8 has len 9
+	lbw_putbits_rev(lbw, 9, 4); // 9 has len 10
+	lbw_putbits_rev(lbw, 10, 4); // 10 has len 11
+	lbw_putbits_rev(lbw, 11, 4); // 11 has len 12
+	lbw_putbits_rev(lbw, 12, 4); // 12 has len 13
+	lbw_putbits_rev(lbw, 13, 4); // 13 has len 14
+	lbw_putbits_rev(lbw, 14, 4); // 14 has len 15
+
+	lbw_putbits_rev(lbw, 15, 4); // repeat len 0 for 138 times
+	lbw_putbits(lbw, 127, 7);
+
+	lbw_putbits_rev(lbw, 15, 4); // repeat len 0 for 103 times
+	lbw_putbits(lbw, 92, 7);
+
+	lbw_putbits_rev(lbw, 14, 4); // 256 has len 15
+
+	// code lengths for distance
+	lbw_putbits_rev(lbw, 15, 4); // repeat len 0 for 11 times
+	lbw_putbits(lbw, 0, 7);
+
+	// compressed data
+	lbw_putbits_rev(lbw, 0, 1); // literal 0
+	lbw_putbits_rev(lbw, 2, 2); // literal 1
+	lbw_putbits_rev(lbw, 6, 3); // literal 2
+	lbw_putbits_rev(lbw, 14, 4); // literal 3
+	lbw_putbits_rev(lbw, 30, 5); // literal 4
+	lbw_putbits_rev(lbw, 62, 6); // literal 5
+	lbw_putbits_rev(lbw, 126, 7); // literal 6
+	lbw_putbits_rev(lbw, 254, 8); // literal 7
+	lbw_putbits_rev(lbw, 510, 9); // literal 8
+	lbw_putbits_rev(lbw, 1022, 10); // literal 9
+	lbw_putbits_rev(lbw, 2046, 11); // literal 10
+	lbw_putbits_rev(lbw, 4094, 12); // literal 11
+	lbw_putbits_rev(lbw, 8190, 13); // literal 12
+	lbw_putbits_rev(lbw, 16382, 14); // literal 13
+	lbw_putbits_rev(lbw, 32766, 15); // literal 14
+
+	// end of block
+	lbw_putbits_rev(lbw, 32767, 15); // 256 = EOB
 }
 
 unsigned char buffer[64 * 1024];
@@ -393,7 +481,7 @@ main(int argc, char *argv[])
 
 	lbw_init(&lbw, &data[0]);
 
-	write_max_dist(&lbw);
+	write_max_codelen(&lbw);
 
 	uint32_t size = lbw_finalize(&lbw) - &data[0];
 

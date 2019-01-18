@@ -394,6 +394,35 @@ TEST inflate_code_length_codes(void)
 	PASS();
 }
 
+TEST inflate_max_codelen(void)
+{
+	/* Use all codeword lengths including 15 */
+	static const unsigned char data[] = {
+		0x05, 0xEA, 0x01, 0x82, 0x24, 0x49, 0x92, 0x24, 0x49, 0x02,
+		0x12, 0x8B, 0x9A, 0x47, 0x56, 0xCF, 0xDE, 0xFF, 0x9F, 0x7B,
+		0x0F, 0xD0, 0xEE, 0x7D, 0xBF, 0xBF, 0x7F, 0xFF, 0xFD, 0xEF,
+		0xFF, 0xFE, 0xDF, 0xFF, 0xF7, 0xFF, 0xFB, 0xFF, 0x03
+	};
+	unsigned char out[15];
+	unsigned int dlen = ARRAY_SIZE(out);
+	int res;
+	int i;
+
+	memset(out, 0xFF, ARRAY_SIZE(out));
+
+	res = tinf_uncompress(out, &dlen, data, ARRAY_SIZE(data));
+
+	ASSERT(res == TINF_OK && dlen == ARRAY_SIZE(out));
+
+	for (i = 0; i < ARRAY_SIZE(out); ++i) {
+		if (out[i] != i) {
+			FAIL();
+		}
+	}
+
+	PASS();
+}
+
 /* Test tinf_uncompress on random data */
 TEST inflate_random(void)
 {
@@ -446,6 +475,7 @@ SUITE(tinflate)
 	RUN_TEST(inflate_max_matchlen_alt);
 	RUN_TEST(inflate_max_matchdist);
 	RUN_TEST(inflate_code_length_codes);
+	RUN_TEST(inflate_max_codelen);
 
 	RUN_TEST(inflate_random);
 
