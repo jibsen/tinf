@@ -35,8 +35,8 @@
 /* -- Internal data structures -- */
 
 struct tinf_tree {
-	unsigned short table[16]; /* Table of code length counts */
-	unsigned short trans[288]; /* Code -> symbol translation table */
+	unsigned short counts[16]; /* Number of codes with a given length */
+	unsigned short symbols[288]; /* Symbols sorted by code */
 	int max_sym;
 };
 
@@ -68,39 +68,39 @@ static void tinf_build_fixed_trees(struct tinf_tree *lt, struct tinf_tree *dt)
 {
 	int i;
 
-	/* Build fixed length tree */
+	/* Build fixed literal/length tree */
 	for (i = 0; i < 16; ++i) {
-		lt->table[i] = 0;
+		lt->counts[i] = 0;
 	}
 
-	lt->table[7] = 24;
-	lt->table[8] = 152;
-	lt->table[9] = 112;
+	lt->counts[7] = 24;
+	lt->counts[8] = 152;
+	lt->counts[9] = 112;
 
 	for (i = 0; i < 24; ++i) {
-		lt->trans[i] = 256 + i;
+		lt->symbols[i] = 256 + i;
 	}
 	for (i = 0; i < 144; ++i) {
-		lt->trans[24 + i] = i;
+		lt->symbols[24 + i] = i;
 	}
 	for (i = 0; i < 8; ++i) {
-		lt->trans[24 + 144 + i] = 280 + i;
+		lt->symbols[24 + 144 + i] = 280 + i;
 	}
 	for (i = 0; i < 112; ++i) {
-		lt->trans[24 + 144 + 8 + i] = 144 + i;
+		lt->symbols[24 + 144 + 8 + i] = 144 + i;
 	}
 
 	lt->max_sym = 285;
 
 	/* Build fixed distance tree */
 	for (i = 0; i < 16; ++i) {
-		dt->table[i] = 0;
+		dt->counts[i] = 0;
 	}
 
-	dt->table[5] = 32;
+	dt->counts[5] = 32;
 
 	for (i = 0; i < 32; ++i) {
-		dt->trans[i] = i;
+		dt->symbols[i] = i;
 	}
 
 	dt->max_sym = 29;
@@ -111,18 +111,17 @@ static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
                            unsigned int num)
 {
 	unsigned short offs[16];
-	unsigned int i, sum, max;
+	unsigned int i, num_codes, available;
 
 	assert(num <= 288);
 
-	/* Clear code length count table */
 	for (i = 0; i < 16; ++i) {
-		t->table[i] = 0;
+		t->counts[i] = 0;
 	}
 
 	t->max_sym = -1;
 
-	/* Scan symbol lengths, and sum code length counts */
+	/* Count number of codes for each length */
 	for (i = 0; i < num; ++i) {
 		assert(lengths[i] <= 15);
 
@@ -130,41 +129,48 @@ static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
 			t->max_sym = i;
 		}
 
-		t->table[lengths[i]]++;
+		t->counts[lengths[i]]++;
 	}
 
-	t->table[0] = 0;
+	t->counts[0] = 0;
 
 	/* Compute offset table for distribution sort */
-	for (max = 1, sum = 0, i = 0; i < 16; ++i) {
-		/* Check no code length contains more codes than possible */
-		if (t->table[i] > max) {
+	for (available = 1, num_codes = 0, i = 0; i < 16; ++i) {
+		unsigned int used = t->counts[i];
+
+		/* Check length contains no more codes than available */
+		if (used > available) {
 			return TINF_DATA_ERROR;
 		}
-		max = 2 * (max - t->table[i]);
+		available = 2 * (available - used);
 
-		offs[i] = sum;
-		sum += t->table[i];
+		offs[i] = num_codes;
+		num_codes += used;
 	}
 
-	/* Check all codes were used, except for special case of one code */
-	if ((sum > 1 && max > 0) || (sum == 1 && t->table[1] != 1)) {
+	/*
+	 * Check all codes were used, or for the special case of only one
+	 * code that it has length 1
+	 */
+	if ((num_codes > 1 && available > 0)
+	 || (num_codes == 1 && t->counts[1] != 1)) {
 		return TINF_DATA_ERROR;
 	}
 
-	/* Create code->symbol translation table (symbols sorted by code) */
+	/* Fill in symbols sorted by code */
 	for (i = 0; i < num; ++i) {
 		if (lengths[i]) {
-			t->trans[offs[lengths[i]]++] = i;
+			t->symbols[offs[lengths[i]]++] = i;
 		}
 	}
 
-	/* For the special case of only one code which will have code 0, add
-	 * a code 1 which results in a symbol that is too large
+	/*
+	 * For the special case of only one code (which will be 0) add a
+	 * code 1 which results in a symbol that is too large
 	 */
-	if (sum == 1) {
-		t->table[1] = 2;
-		t->trans[1] = t->max_sym + 1;
+	if (num_codes == 1) {
+		t->counts[1] = 2;
+		t->symbols[1] = t->max_sym + 1;
 	}
 
 	return TINF_OK;
@@ -222,23 +228,35 @@ static unsigned int tinf_getbits_base(struct tinf_data *d, int num, int base)
 /* Given a data stream and a tree, decode a symbol */
 static int tinf_decode_symbol(struct tinf_data *d, const struct tinf_tree *t)
 {
-	int sum = 0, cur = 0, len = 0;
+	int base = 0, offs = 0, len = 0;
 
-	/* Get more bits while code value is above sum */
+	/*
+	 * Get more bits while code index is above number of codes
+	 *
+	 * Rather than the actual code, we are computing the position of the
+	 * code in the sorted order of codes, which is the index of the
+	 * corresponding symbol.
+	 *
+	 * Conceptually, for each code length (level in the tree), there are
+	 * counts[len] leaves on the left and internal nodes on the right.
+	 * The index we have decoded so far is base + offs, and if that
+	 * falls within the leaves we are done. Otherwise we adjust the range
+	 * of offs and add one more bit to it.
+	 */
 	do {
-		cur = 2 * cur + tinf_getbits(d, 1);
+		offs = 2 * offs + tinf_getbits(d, 1);
 
 		++len;
 
 		assert(len <= 15);
 
-		sum += t->table[len];
-		cur -= t->table[len];
-	} while (cur >= 0);
+		base += t->counts[len];
+		offs -= t->counts[len];
+	} while (offs >= 0);
 
-	assert(sum + cur >= 0 && sum + cur < 288);
+	assert(base + offs >= 0 && base + offs < 288);
 
-	return t->trans[sum + cur];
+	return t->symbols[base + offs];
 }
 
 /* Given a data stream, decode dynamic trees from it */
@@ -266,7 +284,8 @@ static int tinf_decode_trees(struct tinf_data *d, struct tinf_tree *lt,
 	/* Get 4 bits HCLEN (4-19) */
 	hclen = tinf_getbits_base(d, 4, 4);
 
-	/* The RFC limits the range of HLIT to 286, but lists HDIST as range
+	/*
+	 * The RFC limits the range of HLIT to 286, but lists HDIST as range
 	 * 1-32, even though distance codes 30 and 31 have no meaning. While
 	 * we could allow the full range of HLIT and HDIST to make it possible
 	 * to decode the fixed trees with this function, we consider it an
