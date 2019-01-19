@@ -121,18 +121,15 @@ static int tinf_build_tree(struct tinf_tree *t, const unsigned char *lengths,
 
 	t->max_sym = -1;
 
-	/* Count number of codes for each length */
+	/* Count number of codes for each non-zero length */
 	for (i = 0; i < num; ++i) {
 		assert(lengths[i] <= 15);
 
 		if (lengths[i]) {
 			t->max_sym = i;
+			t->counts[lengths[i]]++;
 		}
-
-		t->counts[lengths[i]]++;
 	}
-
-	t->counts[0] = 0;
 
 	/* Compute offset table for distribution sort */
 	for (available = 1, num_codes = 0, i = 0; i < 16; ++i) {
