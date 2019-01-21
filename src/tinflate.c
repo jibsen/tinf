@@ -225,7 +225,8 @@ static unsigned int tinf_getbits_base(struct tinf_data *d, int num, int base)
 /* Given a data stream and a tree, decode a symbol */
 static int tinf_decode_symbol(struct tinf_data *d, const struct tinf_tree *t)
 {
-	int base = 0, offs = 0, len = 0;
+	int base = 0, offs = 0;
+	int len;
 
 	/*
 	 * Get more bits while code index is above number of codes
@@ -240,16 +241,18 @@ static int tinf_decode_symbol(struct tinf_data *d, const struct tinf_tree *t)
 	 * falls within the leaves we are done. Otherwise we adjust the range
 	 * of offs and add one more bit to it.
 	 */
-	do {
+	for (len = 1; ; ++len) {
 		offs = 2 * offs + tinf_getbits(d, 1);
-
-		++len;
 
 		assert(len <= 15);
 
+		if (offs < t->counts[len]) {
+			break;
+		}
+
 		base += t->counts[len];
 		offs -= t->counts[len];
-	} while (offs >= 0);
+	}
 
 	assert(base + offs >= 0 && base + offs < 288);
 
