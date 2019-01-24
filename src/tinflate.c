@@ -424,11 +424,6 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 			return TINF_DATA_ERROR;
 		}
 
-		/* Check for end of block */
-		if (sym == 256) {
-			return TINF_OK;
-		}
-
 		if (sym < 256) {
 			if (d->dest == d->dest_end) {
 				return TINF_BUF_ERROR;
@@ -438,6 +433,11 @@ static int tinf_inflate_block_data(struct tinf_data *d, struct tinf_tree *lt,
 		else {
 			int length, dist, offs;
 			int i;
+
+			/* Check for end of block */
+			if (sym == 256) {
+				return TINF_OK;
+			}
 
 			/* Check sym is within range and distance tree is not empty */
 			if (sym > lt->max_sym || sym - 257 > 28 || dt->max_sym == -1) {
