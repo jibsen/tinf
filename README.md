@@ -2,7 +2,7 @@
 tinf - tiny inflate library
 ===========================
 
-Version 1.2.0
+Version 1.2.1
 
 Copyright (c) 2003-2019 Joergen Ibsen
 
