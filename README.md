@@ -98,6 +98,7 @@ Related Projects
   - [tinfl](https://github.com/richgel999/miniz) (part of miniz)
   - [uzlib](https://github.com/pfalcon/uzlib)
   - [gdunzip](https://github.com/jellehermsen/gdunzip) (GDScript)
+  - [TinyDeflate](https://github.com/bisqwit/TinyDeflate) (C++)
   - [tiny-inflate](https://github.com/foliojs/tiny-inflate) (JavaScript)
   - [tinflate](http://achurch.org/tinflate.c) (unrelated to this project)
   - The [Wikipedia page for deflate](https://en.wikipedia.org/wiki/DEFLATE)
