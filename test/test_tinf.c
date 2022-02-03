@@ -1,7 +1,7 @@
 /*
  * tinf unit test
  *
- * Copyright (c) 2014-2019 Joergen Ibsen
+ * Copyright (c) 2014-2022 Joergen Ibsen
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -226,7 +226,7 @@ TEST inflate_huffman_only(void)
 	unsigned char out[256];
 	unsigned int dlen = ARRAY_SIZE(out);
 	int res;
-	int i;
+	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
 
@@ -253,7 +253,7 @@ TEST inflate_rle(void)
 	unsigned char out[256];
 	unsigned int dlen = ARRAY_SIZE(out);
 	int res;
-	int i;
+	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
 
@@ -280,7 +280,7 @@ TEST inflate_max_matchlen(void)
 	unsigned char out[259];
 	unsigned int dlen = ARRAY_SIZE(out);
 	int res;
-	int i;
+	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
 
@@ -313,7 +313,7 @@ TEST inflate_max_matchlen_alt(void)
 	unsigned char out[259];
 	unsigned int dlen = ARRAY_SIZE(out);
 	int res;
-	int i;
+	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
 
@@ -344,7 +344,7 @@ TEST inflate_max_matchdist(void)
 	unsigned char out[32771];
 	unsigned int dlen = ARRAY_SIZE(out);
 	int res;
-	int i;
+	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
 
@@ -377,7 +377,7 @@ TEST inflate_code_length_codes(void)
 	unsigned char out[4];
 	unsigned int dlen = ARRAY_SIZE(out);
 	int res;
-	int i;
+	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
 
@@ -406,7 +406,7 @@ TEST inflate_max_codelen(void)
 	unsigned char out[15];
 	unsigned int dlen = ARRAY_SIZE(out);
 	int res;
-	int i;
+	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
 
@@ -431,7 +431,7 @@ TEST inflate_random(void)
 
 	for (len = 1; len < ARRAY_SIZE(data); ++len) {
 		unsigned int dlen = ARRAY_SIZE(buffer);
-		int i;
+		size_t i;
 
 		for (i = 0; i < len; ++i) {
 			data[i] = (unsigned char) rand();
@@ -465,7 +465,7 @@ TEST inflate_error_case(const void *closure)
 SUITE(tinflate)
 {
 	char suffix[32];
-	int i;
+	size_t i;
 
 	RUN_TEST(inflate_padding);
 	RUN_TEST(inflate_empty_no_literals);
@@ -480,7 +480,7 @@ SUITE(tinflate)
 	RUN_TEST(inflate_random);
 
 	for (i = 0; i < ARRAY_SIZE(inflate_errors); ++i) {
-		sprintf(suffix, "%d", i);
+		sprintf(suffix, "%d", (int) i);
 		greatest_set_test_suffix(suffix);
 		RUN_TEST1(inflate_error_case, &inflate_errors[i]);
 	}
@@ -601,7 +601,7 @@ TEST zlib_zeroes(void)
 	unsigned char out[256];
 	unsigned int dlen = ARRAY_SIZE(out);
 	int res;
-	int i;
+	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
 
@@ -635,7 +635,7 @@ TEST zlib_error_case(const void *closure)
 SUITE(tinfzlib)
 {
 	char suffix[32];
-	int i;
+	size_t i;
 
 	RUN_TEST(zlib_empty_raw);
 	RUN_TEST(zlib_empty_fixed);
@@ -647,7 +647,7 @@ SUITE(tinfzlib)
 	RUN_TEST(zlib_zeroes);
 
 	for (i = 0; i < ARRAY_SIZE(zlib_errors); ++i) {
-		sprintf(suffix, "%d", i);
+		sprintf(suffix, "%d", (int) i);
 		greatest_set_test_suffix(suffix);
 		RUN_TEST1(zlib_error_case, &zlib_errors[i]);
 	}
@@ -858,7 +858,7 @@ TEST gzip_error_case(const void *closure)
 SUITE(tinfgzip)
 {
 	char suffix[32];
-	int i;
+	size_t i;
 
 	RUN_TEST(gzip_empty_raw);
 	RUN_TEST(gzip_empty_fixed);
@@ -874,7 +874,7 @@ SUITE(tinfgzip)
 	RUN_TEST(gzip_fcomment);
 
 	for (i = 0; i < ARRAY_SIZE(gzip_errors); ++i) {
-		sprintf(suffix, "%d", i);
+		sprintf(suffix, "%d", (int) i);
 		greatest_set_test_suffix(suffix);
 		RUN_TEST1(gzip_error_case, &gzip_errors[i]);
 	}
