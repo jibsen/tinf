@@ -1,0 +1,56 @@
+name: tinf CI
+
+on: [push, pull_request]
+
+jobs:
+  windows:
+    name: Windows ${{ matrix.config.name }}
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        config:
+          - name: MSVC x64
+            generator: Visual Studio 16 2019
+            cmake-flags: -A x64
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure
+        run: cmake -G "${{ matrix.config.generator }}" ${{ matrix.config.cmake-flags }} -B build
+
+      - name: Build
+        run: cd build && cmake --build . --config Debug
+
+      - name: Test
+        run: cd build && ctest -V --output-on-failure --interactive-debug-mode 0 -C Debug
+
+  linux:
+    name: Linux ${{ matrix.config.name }}
+    runs-on: ubuntu-latest
+    env:
+      CC: ${{ matrix.config.cc }}
+
+    strategy:
+      matrix:
+        config:
+          - name: Clang UBSan
+            cc: clang
+            cmake-flags: -DCMAKE_C_FLAGS_DEBUG='-g -fsanitize=undefined'
+
+          - name: Clang ASan
+            cc: clang
+            cmake-flags: -DCMAKE_C_FLAGS_DEBUG='-O1 -g -fsanitize=address -fno-omit-frame-pointer'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure
+        run: cmake ${{ matrix.config.cmake-flags }} -DCMAKE_BUILD_TYPE=Debug -B build
+
+      - name: Build
+        run: cd build && make VERBOSE=1
+
+      - name: Test
+        run: cd build && ctest -V --output-on-failure --interactive-debug-mode 0

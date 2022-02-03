@@ -8,7 +8,7 @@ Copyright (c) 2003-2019 Joergen Ibsen
 
 <http://www.ibsensoftware.com/>
 
-[![Build Status](https://dev.azure.com/jibsenorg/jibsen/_apis/build/status/jibsen.tinf?branchName=master)](https://dev.azure.com/jibsenorg/jibsen/_build/latest?definitionId=3?branchName=master)
+[![tinf CI](https://github.com/jibsen/tinf/actions/workflows/tinf-ci-workflow.yaml/badge.svg)](https://github.com/jibsen/tinf/actions)
 
 About
 -----
@@ -49,8 +49,8 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release
 ~~~
 
-You can also simply compile the source files and link them into your project.
-CMake just provides an easy way to build and test across various platforms and
+You can also compile the source files and link them into your project. CMake
+just provides an easy way to build and test across various platforms and
 toolsets.
 
 [doxygen]: http://www.doxygen.org/
@@ -84,6 +84,7 @@ Ideas for future versions:
   - Wrappers for unpacking zip archives and png images
   - Blocking of some sort, so everything does not have to be in memory
   - Optional table-based Huffman decoder
+  - Small compressor using fixed Huffman trees
 
 [deflate]: http://www.rfc-editor.org/rfc/rfc1951.txt
 [zlib]: http://www.rfc-editor.org/rfc/rfc1950.txt
