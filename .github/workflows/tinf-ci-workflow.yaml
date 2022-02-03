@@ -54,3 +54,27 @@ jobs:
 
       - name: Test
         run: cd build && ctest -V --output-on-failure --interactive-debug-mode 0
+
+  coverage:
+    name: Linux Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure
+        run: cmake -DCMAKE_C_FLAGS_DEBUG='-g -O0 --coverage' -DCMAKE_BUILD_TYPE=Debug -B build
+
+      - name: Build
+        run: cd build && make VERBOSE=1
+
+      - name: Test
+        run: cd build && ctest -V --output-on-failure --interactive-debug-mode 0
+
+      - name: Generate coverage
+        run: cd build && gcov -b CMakeFiles/tinf.dir/src/*.c.gcno -o CMakeFiles/tinf.dir/src
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          directory: ./build/

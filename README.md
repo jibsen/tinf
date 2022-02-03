@@ -8,7 +8,7 @@ Copyright (c) 2003-2019 Joergen Ibsen
 
 <http://www.ibsensoftware.com/>
 
-[![tinf CI](https://github.com/jibsen/tinf/actions/workflows/tinf-ci-workflow.yaml/badge.svg)](https://github.com/jibsen/tinf/actions)
+[![tinf CI](https://github.com/jibsen/tinf/actions/workflows/tinf-ci-workflow.yaml/badge.svg)](https://github.com/jibsen/tinf/actions) [![codecov](https://codecov.io/gh/jibsen/tinf/branch/master/graph/badge.svg)](https://codecov.io/gh/jibsen/tinf)
 
 About
 -----
