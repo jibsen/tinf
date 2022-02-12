@@ -72,7 +72,7 @@ jobs:
         run: cd build && ctest -V --output-on-failure --interactive-debug-mode 0
 
       - name: Generate coverage
-        run: cd build && gcov -b CMakeFiles/tinf.dir/src/*.c.gcno -o CMakeFiles/tinf.dir/src
+        run: cd build && gcov -abcfu CMakeFiles/tinf.dir/src/*.c.gcno -o CMakeFiles/tinf.dir/src
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
