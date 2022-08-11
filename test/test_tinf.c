@@ -26,6 +26,7 @@
 #include "tinf.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
 
@@ -40,8 +41,8 @@ static const unsigned char robuffer[] = { 0 };
 static unsigned char buffer[4096];
 
 struct packed_data {
-	unsigned int src_size;
-	unsigned int depacked_size;
+	uint32_t src_size;
+	uint32_t depacked_size;
 	const unsigned char data[32];
 };
 
@@ -179,8 +180,8 @@ TEST inflate_padding(void)
 	static const unsigned char data[] = {
 		0x03, 0xFC
 	};
-	unsigned int dlen = 0;
-	int res;
+	uint32_t dlen = 0;
+	int32_t res;
 
 	res = tinf_uncompress((void *) robuffer, &dlen, data, ARRAY_SIZE(data));
 
@@ -203,8 +204,8 @@ TEST inflate_empty_no_literals(void)
 		0x05, 0xCA, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xFF,
 		0x6B, 0x01, 0x00
 	};
-	unsigned int dlen = 0;
-	int res;
+	uint32_t dlen = 0;
+	int32_t res;
 
 	res = tinf_uncompress((void *) robuffer, &dlen, data, ARRAY_SIZE(data));
 
@@ -224,8 +225,8 @@ TEST inflate_huffman_only(void)
 		0x00, 0x00, 0x00, 0x00, 0x02
 	};
 	unsigned char out[256];
-	unsigned int dlen = ARRAY_SIZE(out);
-	int res;
+	uint32_t dlen = ARRAY_SIZE(out);
+	int32_t res;
 	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
@@ -251,8 +252,8 @@ TEST inflate_rle(void)
 		0xA9, 0x07, 0x39, 0x73, 0x01
 	};
 	unsigned char out[256];
-	unsigned int dlen = ARRAY_SIZE(out);
-	int res;
+	uint32_t dlen = ARRAY_SIZE(out);
+	int32_t res;
 	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
@@ -278,8 +279,8 @@ TEST inflate_max_matchlen(void)
 		0xA9, 0x17, 0xB9, 0x00, 0x2C
 	};
 	unsigned char out[259];
-	unsigned int dlen = ARRAY_SIZE(out);
-	int res;
+	uint32_t dlen = ARRAY_SIZE(out);
+	int32_t res;
 	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
@@ -311,8 +312,8 @@ TEST inflate_max_matchlen_alt(void)
 		0xA9, 0x07, 0xB9, 0x00, 0xFC, 0x05
 	};
 	unsigned char out[259];
-	unsigned int dlen = ARRAY_SIZE(out);
-	int res;
+	uint32_t dlen = ARRAY_SIZE(out);
+	int32_t res;
 	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
@@ -342,8 +343,8 @@ TEST inflate_max_matchdist(void)
 		0xFE, 0xFF, 0x05
 	};
 	unsigned char out[32771];
-	unsigned int dlen = ARRAY_SIZE(out);
-	int res;
+	uint32_t dlen = ARRAY_SIZE(out);
+	int32_t res;
 	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
@@ -375,8 +376,8 @@ TEST inflate_code_length_codes(void)
 		0x77, 0x1E, 0xCA, 0x61, 0x01
 	};
 	unsigned char out[4];
-	unsigned int dlen = ARRAY_SIZE(out);
-	int res;
+	uint32_t dlen = ARRAY_SIZE(out);
+	int32_t res;
 	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
@@ -404,8 +405,8 @@ TEST inflate_max_codelen(void)
 		0xFF, 0xFE, 0xDF, 0xFF, 0xF7, 0xFF, 0xFB, 0xFF, 0x03
 	};
 	unsigned char out[15];
-	unsigned int dlen = ARRAY_SIZE(out);
-	int res;
+	uint32_t dlen = ARRAY_SIZE(out);
+	int32_t res;
 	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
@@ -427,10 +428,10 @@ TEST inflate_max_codelen(void)
 TEST inflate_random(void)
 {
 	unsigned char data[256];
-	unsigned int len;
+	uint32_t len;
 
 	for (len = 1; len < ARRAY_SIZE(data); ++len) {
-		unsigned int dlen = ARRAY_SIZE(buffer);
+		uint32_t dlen = ARRAY_SIZE(buffer);
 		size_t i;
 
 		for (i = 0; i < len; ++i) {
@@ -452,9 +453,9 @@ TEST inflate_random(void)
 TEST inflate_error_case(const void *closure)
 {
 	const struct packed_data *pd = (const struct packed_data *) closure;
-	int res;
+	int32_t res;
 
-	unsigned int size = pd->depacked_size;
+	uint32_t size = pd->depacked_size;
 	res = tinf_uncompress(buffer, &size, pd->data, pd->src_size);
 
 	ASSERT(res != TINF_OK);
@@ -480,7 +481,7 @@ SUITE(tinflate)
 	RUN_TEST(inflate_random);
 
 	for (i = 0; i < ARRAY_SIZE(inflate_errors); ++i) {
-		sprintf(suffix, "%d", (int) i);
+		sprintf(suffix, "%d", (int32_t) i);
 		greatest_set_test_suffix(suffix);
 		RUN_TEST1(inflate_error_case, &inflate_errors[i]);
 	}
@@ -495,8 +496,8 @@ TEST zlib_empty_raw(void)
 		0x78, 0x9C, 0x01, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00,
 		0x01
 	};
-	unsigned int dlen = 0;
-	int res;
+	uint32_t dlen = 0;
+	int32_t res;
 
 	res = tinf_zlib_uncompress((void *) robuffer, &dlen, data, ARRAY_SIZE(data));
 
@@ -511,8 +512,8 @@ TEST zlib_empty_fixed(void)
 	static const unsigned char data[] = {
 		0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01
 	};
-	unsigned int dlen = 0;
-	int res;
+	uint32_t dlen = 0;
+	int32_t res;
 
 	res = tinf_zlib_uncompress((void *) robuffer, &dlen, data, ARRAY_SIZE(data));
 
@@ -528,8 +529,8 @@ TEST zlib_empty_dynamic(void)
 		0x78, 0x9C, 0x05, 0xC1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x10, 0xFF, 0xD5, 0x08, 0x00, 0x00, 0x00, 0x01
 	};
-	unsigned int dlen = 0;
-	int res;
+	uint32_t dlen = 0;
+	int32_t res;
 
 	res = tinf_zlib_uncompress((void *) robuffer, &dlen, data, ARRAY_SIZE(data));
 
@@ -546,8 +547,8 @@ TEST zlib_onebyte_raw(void)
 		0x00, 0x01
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_zlib_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -563,8 +564,8 @@ TEST zlib_onebyte_fixed(void)
 		0x78, 0x9C, 0x63, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_zlib_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -581,8 +582,8 @@ TEST zlib_onebyte_dynamic(void)
 		0x10, 0xFF, 0xD5, 0x10, 0x00, 0x01, 0x00, 0x01
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_zlib_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -599,8 +600,8 @@ TEST zlib_zeroes(void)
 		0x00, 0x01
 	};
 	unsigned char out[256];
-	unsigned int dlen = ARRAY_SIZE(out);
-	int res;
+	uint32_t dlen = ARRAY_SIZE(out);
+	int32_t res;
 	size_t i;
 
 	memset(out, 0xFF, ARRAY_SIZE(out));
@@ -622,9 +623,9 @@ TEST zlib_zeroes(void)
 TEST zlib_error_case(const void *closure)
 {
 	const struct packed_data *pd = (const struct packed_data *) closure;
-	int res;
+	int32_t res;
 
-	unsigned int size = pd->depacked_size;
+	uint32_t size = pd->depacked_size;
 	res = tinf_zlib_uncompress(buffer, &size, pd->data, pd->src_size);
 
 	ASSERT(res != TINF_OK);
@@ -647,7 +648,7 @@ SUITE(tinfzlib)
 	RUN_TEST(zlib_zeroes);
 
 	for (i = 0; i < ARRAY_SIZE(zlib_errors); ++i) {
-		sprintf(suffix, "%d", (int) i);
+		sprintf(suffix, "%d", (int32_t) i);
 		greatest_set_test_suffix(suffix);
 		RUN_TEST1(zlib_error_case, &zlib_errors[i]);
 	}
@@ -663,8 +664,8 @@ TEST gzip_empty_raw(void)
 		0x01, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00
 	};
-	unsigned int dlen = 0;
-	int res;
+	uint32_t dlen = 0;
+	int32_t res;
 
 	res = tinf_gzip_uncompress((void *) robuffer, &dlen, data, ARRAY_SIZE(data));
 
@@ -680,8 +681,8 @@ TEST gzip_empty_fixed(void)
 		0x1F, 0x8B, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0B,
 		0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
-	unsigned int dlen = 0;
-	int res;
+	uint32_t dlen = 0;
+	int32_t res;
 
 	res = tinf_gzip_uncompress((void *) robuffer, &dlen, data, ARRAY_SIZE(data));
 
@@ -698,8 +699,8 @@ TEST gzip_empty_dynamic(void)
 		0x05, 0xC1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xFF,
 		0xD5, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
-	unsigned int dlen = 0;
-	int res;
+	uint32_t dlen = 0;
+	int32_t res;
 
 	res = tinf_gzip_uncompress((void *) robuffer, &dlen, data, ARRAY_SIZE(data));
 
@@ -717,8 +718,8 @@ TEST gzip_onebyte_raw(void)
 		0x01, 0x00, 0x00, 0x00
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_gzip_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -736,8 +737,8 @@ TEST gzip_onebyte_fixed(void)
 		0x00
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_gzip_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -755,8 +756,8 @@ TEST gzip_onebyte_dynamic(void)
 		0xD5, 0x10, 0x8D, 0xEF, 0x02, 0xD2, 0x01, 0x00, 0x00, 0x00
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_gzip_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -774,8 +775,8 @@ TEST gzip_fhcrc(void)
 		0x02, 0xD2, 0x01, 0x00, 0x00, 0x00
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_gzip_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -793,8 +794,8 @@ TEST gzip_fextra(void)
 		0xFF, 0x00, 0x8D, 0xEF, 0x02, 0xD2, 0x01, 0x00, 0x00, 0x00
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_gzip_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -812,8 +813,8 @@ TEST gzip_fname(void)
 		0xFF, 0x00, 0x8D, 0xEF, 0x02, 0xD2, 0x01, 0x00, 0x00, 0x00
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_gzip_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -831,8 +832,8 @@ TEST gzip_fcomment(void)
 		0xFF, 0x00, 0x8D, 0xEF, 0x02, 0xD2, 0x01, 0x00, 0x00, 0x00
 	};
 	unsigned char out[] = { 0xFF };
-	unsigned int dlen = 1;
-	int res;
+	uint32_t dlen = 1;
+	int32_t res;
 
 	res = tinf_gzip_uncompress(out, &dlen, data, ARRAY_SIZE(data));
 
@@ -845,9 +846,9 @@ TEST gzip_fcomment(void)
 TEST gzip_error_case(const void *closure)
 {
 	const struct packed_data *pd = (const struct packed_data *) closure;
-	int res;
+	int32_t res;
 
-	unsigned int size = pd->depacked_size;
+	uint32_t size = pd->depacked_size;
 	res = tinf_gzip_uncompress(buffer, &size, pd->data, pd->src_size);
 
 	ASSERT(res != TINF_OK);
@@ -874,7 +875,7 @@ SUITE(tinfgzip)
 	RUN_TEST(gzip_fcomment);
 
 	for (i = 0; i < ARRAY_SIZE(gzip_errors); ++i) {
-		sprintf(suffix, "%d", (int) i);
+		sprintf(suffix, "%d", (int32_t) i);
 		greatest_set_test_suffix(suffix);
 		RUN_TEST1(gzip_error_case, &gzip_errors[i]);
 	}
