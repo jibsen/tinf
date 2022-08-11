@@ -32,7 +32,7 @@
 struct lsb_bitwriter {
 	unsigned char *next_out;
 	uint32_t tag;
-	int bitcount;
+	int32_t bitcount;
 };
 
 static void
@@ -57,7 +57,7 @@ lbw_finalize(struct lsb_bitwriter *lbw)
 }
 
 static void
-lbw_flush(struct lsb_bitwriter *lbw, int num) {
+lbw_flush(struct lsb_bitwriter *lbw, int32_t num) {
 	assert(num >= 0 && num <= 32);
 
 	/* Write bytes until at least num bits free */
@@ -71,7 +71,7 @@ lbw_flush(struct lsb_bitwriter *lbw, int num) {
 }
 
 static void
-lbw_putbits_no_flush(struct lsb_bitwriter *lbw, uint32_t bits, int num) {
+lbw_putbits_no_flush(struct lsb_bitwriter *lbw, uint32_t bits, int32_t num) {
 	assert(num >= 0 && num <= 32 - lbw->bitcount);
 	assert((bits & (~0ULL << num)) == 0);
 
@@ -81,13 +81,13 @@ lbw_putbits_no_flush(struct lsb_bitwriter *lbw, uint32_t bits, int num) {
 }
 
 static void
-lbw_putbits(struct lsb_bitwriter *lbw, uint32_t bits, int num) {
+lbw_putbits(struct lsb_bitwriter *lbw, uint32_t bits, int32_t num) {
 	lbw_flush(lbw, num);
 	lbw_putbits_no_flush(lbw, bits, num);
 }
 
 static void
-lbw_putbits_rev(struct lsb_bitwriter *lbw, uint32_t bits, int num) {
+lbw_putbits_rev(struct lsb_bitwriter *lbw, uint32_t bits, int32_t num) {
 	lbw_flush(lbw, num);
 	while (num-- > 0) {
 		lbw_putbits_no_flush(lbw, (bits >> num) & 1, 1);
@@ -217,7 +217,7 @@ write_256_huffman(struct lsb_bitwriter *lbw)
 	lbw_putbits(lbw, 0, 7);
 
 	// compressed data
-	for (int i = 0; i < 256; ++i) {
+	for (int32_t i = 0; i < 256; ++i) {
 		lbw_putbits_rev(lbw, 0, 1); // 00 byte
 	}
 
@@ -359,7 +359,7 @@ write_max_dist(struct lsb_bitwriter *lbw)
 
 	lbw_putbits_rev(lbw, 0, 1); // distance 1
 
-	for (int i = 0; i < 126; ++i) {
+	for (int32_t i = 0; i < 126; ++i) {
 		lbw_putbits_rev(lbw, 0, 1); // 285 = copy len 258
 
 		lbw_putbits_rev(lbw, 0, 1); // distance 1
@@ -485,7 +485,7 @@ main(int argc, char *argv[])
 
 	uint32_t size = lbw_finalize(&lbw) - &data[0];
 
-	for (int i = 0; i < size; ++i) {
+	for (int32_t i = 0; i < size; ++i) {
 		if (i > 0) {
 			fputs(", ", stdout);
 		}
@@ -504,8 +504,8 @@ main(int argc, char *argv[])
 
 		fwrite(data, 1, size, fout);
 
-		unsigned int dsize = sizeof(buffer);
-		int res = tinf_uncompress(buffer, &dsize, data, size);
+		uint32_t dsize = sizeof(buffer);
+		int32_t res = tinf_uncompress(buffer, &dsize, data, size);
 
 		if (res != TINF_OK) {
 			fputs("mkzdata: decompression error\n", stderr);

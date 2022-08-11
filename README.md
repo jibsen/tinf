@@ -60,8 +60,6 @@ toolsets.
 Notes
 -----
 
-tinf requires int to be at least 32-bit.
-
 The inflate algorithm and data format are from 'DEFLATE Compressed Data
 Format Specification version 1.3' ([RFC 1951][deflate]).
 
